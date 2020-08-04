@@ -3,6 +3,7 @@ package com.pilove.vodovodinfo
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.pilove.vodovodinfo.utils.recognizeStreets
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import org.jsoup.Jsoup
@@ -29,8 +30,7 @@ class MainActivity : AppCompatActivity() {
 
     fun getNewestNumber() {
         var doc: Document? = null
-        var stringic: String? = "0"
-        var elementic: Element? = null
+        var stringic: String?
 
         uiScope.launch {
             withContext(Dispatchers.IO) {
@@ -41,19 +41,12 @@ class MainActivity : AppCompatActivity() {
                     Log.d("MAINACT", "GRESKA NUMBER " + e.message)
                 }
                 withContext(Dispatchers.Main) {
-                    //Update UI
 
                     doc.let {
 
                         var elemt: Element? =
                             it?.getElementsByAttributeValue("id", "obavjestenja")?.first()
-//                        var e = it?.select("a[href]")
-//                        for (href in e?.eachAttr("href")!!) {
-//                            if (href.contains("/vijesti/") && !href.contains("str")) {
-//                                stringic += href.substringAfter("/vijesti/") + "\n"
-//                                break
-//                            }
-//                        }
+
                         stringic = elemt?.getElementsByClass("row ml-0 mr-0 mb-3 nodec")?.html()?.
                         substringBefore("\">")?.
                         substringAfterLast("/")
@@ -82,35 +75,29 @@ class MainActivity : AppCompatActivity() {
                     Log.d("MAINACT", "GRESKA "+e.message)
                 }
                 withContext(Dispatchers.Main){
-                    //Update UI
 
                     doc.let {
-//                        var stringBuilder = StringBuilder()
-//                        stringBuilder.append("title" +it?.title()).append("\n")
-//                        var elements = it?.select("div")
-//                        stringBuilder.append(elements!!.attr("col-12 mt-4"))
-//                        mainText.text = stringBuilder.toString()
-//                        var elements : Elements? = it?.select("div")
-//                       for(elemt in elements!!) {
-//                           //stringic += "\n ${elemt.className()} + ${elemt.normalName()}"
-//                       }
-                        var obavijest = elementic!!.getElementsByAttributeValue(
-                            "class",
-                            "container-fluid content")
-                        obavijest = elementic!!.getElementsByClass("col-12 mt-4")
-//                            .attr("class", "content-news")
-//                            .attr("class", "col-12 mt-4")
+                        var obavijest = elementic!!.getElementsByClass("col-12 mt-4")
 
-                        //stringic = it?.text()
                         var stringic: String? = obavijest.text()
                         var notice = obavijest.text()
-                        val dateAndTime = notice.substringAfter("Objavljeno").substringBefore("Obavještenje").removePrefix(" ")
+                        val dateAndTime = notice
+                            .substringAfter("Objavljeno")
+                            .substringBefore("Obavještenje")
+                            .removePrefix(" ")
 
-                        val date = SimpleDateFormat("dd.MM.yyyy 'u' HH:mm").parse(dateAndTime.removePrefix(" "))
+                        val date = SimpleDateFormat("dd.MM.yyyy 'u' HH:mm")
+                            .parse(dateAndTime.removePrefix(" "))
+
                         stringic += "\n datum: ${date.toString()}"
 
                         val noticeText = notice.substringAfter("Obavještenje")
                         stringic += "\n text: $noticeText"
+
+                        recognizeStreets(noticeText).forEach {
+                            stringic += "\n $it"
+                        }
+
                         Log.d("MAINACT", stringic)
                     }
                 }
