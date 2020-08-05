@@ -1,5 +1,7 @@
 package com.pilove.vodovodinfo.utils
 
+import android.util.Log
+
 fun recognizeStreets(noticeText: String): ArrayList<String> {
     var tracking = false
     var streets = ArrayList<String>()
@@ -13,7 +15,7 @@ fun recognizeStreets(noticeText: String): ArrayList<String> {
                 word.removeSuffix(".")
             else word
 
-            if(street.contains("ulic")) {
+            if(street.contains("ulic") || street.equals("na")) {
                 street = ""
             } else if(w.equals("i") || w.equals("u")
                 || w.equals("a")) {
