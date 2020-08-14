@@ -13,4 +13,5 @@ class MainViewModel @ViewModelInject constructor(
     fun getNotices() = viewModelScope.launch {
          mainRepository.getNoticesFromServer()
     }
+
 }

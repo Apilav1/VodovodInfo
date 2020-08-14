@@ -10,5 +10,5 @@ data class Notice (
     val text: String
 ) {
     @PrimaryKey(autoGenerate = false)
-    val id: Int? = null
+    var id: Int? = null
 }

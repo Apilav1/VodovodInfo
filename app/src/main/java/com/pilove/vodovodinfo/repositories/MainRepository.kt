@@ -19,8 +19,7 @@ class MainRepository
 
     fun getTenNoticesBeforeId(id: Int) = noticeDAO.getTenNoticesBeforeId(id)
 
-    suspend fun getNoticesFromServer() {
-        noticeServer.getNewestNoticeNumber()
+    fun getNoticesFromServer() {
         noticeServer.getTodayNotices()
     }
 }
