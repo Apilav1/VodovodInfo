@@ -1,4 +1,4 @@
-package com.pilove.vodovodinfo
+package com.pilove.vodovodinfo.ui
 
 import android.os.Bundle
 import android.util.Log
@@ -8,16 +8,15 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.RectangularBounds
-import com.google.android.libraries.places.api.model.TypeFilter
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
+import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.utils.recognizeStreets
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import org.jsoup.select.Elements
 import java.text.SimpleDateFormat
 
 class MainActivity : AppCompatActivity() {
