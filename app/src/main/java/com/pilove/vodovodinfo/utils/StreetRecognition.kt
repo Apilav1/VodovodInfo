@@ -23,16 +23,17 @@ fun recognizeStreets(noticeText: String): ArrayList<String> {
                 if(street.isNotEmpty()) streets.add(street)
                 street = ""
 
-            } else if(word.contains(",") || word.contains(".")) {
-                street += w
-                streets.add(street)
-                street = ""
+            } else if((word.contains(",") || word.contains(".")) &&
+                            !word.contains("ef")) {
+                    street += w
+                    streets.add(street)
+                    street = ""
             } else {
                 street += w + " "
             }
         }
         if(word.contains("ulic")) tracking = true
-        if(word.contains(".")) tracking = false
+        if(word.contains(".") && !word.contains("ef")) tracking = false
     }
 
     return streets
