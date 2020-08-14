@@ -1,8 +1,7 @@
-package com.pilove.vodovodinfo.room
+package com.pilove.vodovodinfo.db
 
 import androidx.room.TypeConverter
 import java.sql.Date
-import java.text.SimpleDateFormat
 
 class Converters {
 

@@ -1,4 +1,4 @@
-package com.pilove.vodovodinfo.room
+package com.pilove.vodovodinfo.db
 
 import androidx.room.*
 
@@ -11,9 +11,11 @@ interface NoticeDAO {
     @Delete
     suspend fun delete(notice: Notice)
 
-    @Query("Select * from notices LIMIT 10")
-    suspend fun get10Notices(): ArrayList<Notice>
+    @Query("Select * from notices order by id DESC LIMIT 10")
+    fun getLastTenNotices(): ArrayList<Notice>
 
     @Query("Select * from notices WHERE id >= :id LIMIT 10")
-    suspend fun getPrevious10Notices(id: Int)
+    fun getTenNoticesBeforeId(id: Int): ArrayList<Notice>
+
+
 }

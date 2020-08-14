@@ -1,4 +1,4 @@
-package com.pilove.vodovodinfo.room
+package com.pilove.vodovodinfo.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
