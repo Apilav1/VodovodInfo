@@ -8,9 +8,10 @@ import kotlinx.coroutines.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.util.Date
 import java.text.SimpleDateFormat
+import java.util.*
 import javax.inject.Inject
+import kotlin.collections.ArrayList
 
 class NoticeServer @Inject constructor() {
 
@@ -20,7 +21,7 @@ class NoticeServer @Inject constructor() {
     private var job: Job = Job()
 
     companion object {
-        var currentNumber = 2000
+        var latestNoticeId = 2500
     }
 
     fun getTodayNotices(): ArrayList<Notice> {
@@ -52,10 +53,10 @@ class NoticeServer @Inject constructor() {
                     substringBefore("\">")?.
                     substringAfterLast("/")
 
-                    currentNumber = stringic?.toInt() ?: 0
+                    latestNoticeId = stringic?.toInt() ?: 0
 
                 }
-                Log.d(DEBUG_TAG, "getting current number done: $currentNumber")
+                Log.d(DEBUG_TAG, "getting current number done: $latestNoticeId")
 
         } catch (e: Exception) {
             Log.d(DEBUG_TAG, "An error while getting newest notice number: " + e.message)
@@ -64,13 +65,39 @@ class NoticeServer @Inject constructor() {
 
      private fun getNewNotices(): ArrayList<Notice> {
 
-        var doc: Document? = null
-        var element : Element?
         var notices = ArrayList<Notice>()
+        var noticeId = latestNoticeId
+
+         CoroutineScope(Dispatchers.IO).launch {
+             while (true) {
+
+                 var notice = getNextNotice(noticeId--)
+                 var noticeForBase = if(!notices.isEmpty()) notices.first()
+                                    else null
+
+                 if(!notices.isEmpty() &&
+                     notice.dateForComparison.before(noticeForBase?.dateForComparison) &&
+                         notice.text != "default") {
+                     break
+                 }
+                 else if(notice.text != "default")
+                     notices.add(notice)
+
+                 delay(1000L)
+             }
+         }
+        return notices
+    }
+
+    private fun getNextNotice(noticeId: Int): Notice {
+
+        var element : Element?
+        var doc: Document? = null
+        var newNotice: Notice
 
         try {
 
-            element = Jsoup.connect(noticeUrl + currentNumber).get().body()
+            element = Jsoup.connect(noticeUrl + noticeId).get().body()
 
             /* Notice html structure example
             <div class="col-12 col-lg-8">
@@ -89,12 +116,18 @@ U nedelju, 16.08.2020. g., radovi na popravkama kvarova vršit će se u ulici Mu
                 var title = noticeElement.child(1).text()
                 var noticeBodyText = noticeElement.child(2).text()
 
+                if(title.split(" ").toTypedArray().first() == "Služba")
+                    return@let
+
                 val dateAndTime = timeReleased
                     .substringAfter("Objavljeno")
                     .removePrefix(" ")
 
                 val date = SimpleDateFormat("dd.MM.yyyy 'u' HH:mm")
                     .parse(dateAndTime.removePrefix(" "))
+
+                val dateForComparison = SimpleDateFormat("dd.MM.yyyy")
+                    .parse(dateAndTime.substringBefore(" "))
 
                 var listOfStreets = ArrayList<String>()
 
@@ -108,18 +141,16 @@ U nedelju, 16.08.2020. g., radovi na popravkama kvarova vršit će se u ulici Mu
                     dates.add(it)
                 }
 
-                val newNotice = Notice(currentNumber, title, date, noticeBodyText, listOfStreets, dates)
+                newNotice = Notice(noticeId, title, date, dateForComparison, noticeBodyText, listOfStreets, dates)
 
-                Log.d(DEBUG_TAG, newNotice.toString())
-
-                notices.add(newNotice)
+                return newNotice
             }
 
         } catch (e: Exception) {
-            Log.d("TAG", "An error happened while getting today notices: ${e.message}")
+            Log.d(DEBUG_TAG, "An error happened while getting today notices: ${e.message}")
         }
 
-        return notices
+        return Notice()
     }
 
 }

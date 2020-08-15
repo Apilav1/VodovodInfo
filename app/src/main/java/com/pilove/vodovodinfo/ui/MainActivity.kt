@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         viewModel.getNotices()
 
         viewModel.notices.observe(this, Observer {
-            Log.d("MAINACT", it.size.toString())
+            Log.d("MAINACT", "Size of result: "+it.size.toString())
         })
 
     }
