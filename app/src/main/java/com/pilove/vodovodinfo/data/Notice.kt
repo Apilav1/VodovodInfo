@@ -6,5 +6,5 @@ data class Notice (
     val id: String,
     val date: Date,
     val text: String,
-    val idOfPreviousNotice: String
+    val streets: ArrayList<String>
 )

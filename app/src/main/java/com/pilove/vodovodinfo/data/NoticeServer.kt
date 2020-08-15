@@ -1,12 +1,14 @@
 package com.pilove.vodovodinfo.data
 
 import android.util.Log
+import androidx.lifecycle.LiveData
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.utils.recognizeStreets
 import kotlinx.coroutines.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.sql.Date
 import java.text.SimpleDateFormat
 import javax.inject.Inject
 
@@ -53,52 +55,65 @@ class NoticeServer @Inject constructor() {
                 Log.d(TAG, "getting current number done: $currentNumber")
 
         } catch (e: Exception) {
-            Log.d(TAG, "Error while getting newest notice number: " + e.message)
+            Log.d(TAG, "An error while getting newest notice number: " + e.message)
         }
     }
 
-     private fun getNewNotices() {
+     private fun getNewNotices(): ArrayList<Notice> {
 
         var doc: Document? = null
-        var elementic : Element? = null
+        var element : Element?
+        var notices: LiveData<ArrayList<Notice>>
 
         try {
 
-            elementic = Jsoup.connect(noticeUrl + currentNumber).get().body()
+            element = Jsoup.connect(noticeUrl + currentNumber).get().body()
 
             doc.let {
 
-                var obavijest = elementic!!.getElementsByClass("col-12 mt-4")
+                var obavijest = element!!.getElementsByClass("col-12 mt-4")
 
                 var stringic: String? = obavijest.text()
-                var notice = obavijest.text()
-                val dateAndTime = notice
+                var noticeStr = obavijest.text()
+
+                val dateAndTime = noticeStr
                     .substringAfter("Objavljeno")
                     .substringBefore("Obavještenje")
                     .removePrefix(" ")
 
                 val date = SimpleDateFormat("dd.MM.yyyy 'u' HH:mm")
-                    .parse(dateAndTime.removePrefix(" "))
+                    .parse(dateAndTime.removePrefix(" ")) as Date
+
 
                 stringic += "\n datum: ${date.toString()}"
 
-                val noticeText = notice.substringAfter("Obavještenje")
+                val noticeText = noticeStr.substringAfter("Obavještenje")
                 stringic += "\n text: $noticeText"
+
+                var listOfStreets = ArrayList<String>()
 
                 recognizeStreets(noticeText).forEach {
                     stringic += "\n $it"
+                    listOfStreets.add(it)
                 }
 
                 val firstStreet = recognizeStreets(noticeText)[0]
                 stringic += "\n street to be recognized : $firstStreet"
 
                 Log.d(TAG, stringic)
+
+                 Notice(
+                    currentNoticeIdUrl,
+                    date,
+                    noticeText,
+                    listOfStreets
+                )
             }
 
         } catch (e: Exception) {
-            Log.d("TAG", "error happened while getting today notices: "+e.message)
+            Log.d("TAG", "An    error happened while getting today notices: "+e.message)
         }
-
+        return ArrayList<Notice>()
     }
 
 }
