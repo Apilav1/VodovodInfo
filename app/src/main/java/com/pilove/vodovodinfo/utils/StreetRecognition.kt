@@ -1,7 +1,5 @@
 package com.pilove.vodovodinfo.utils
 
-import android.util.Log
-
 fun recognizeStreets(noticeText: String): ArrayList<String> {
     var tracking = false
     var streets = ArrayList<String>()

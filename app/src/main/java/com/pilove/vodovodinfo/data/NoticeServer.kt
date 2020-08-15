@@ -1,14 +1,14 @@
 package com.pilove.vodovodinfo.data
 
 import android.util.Log
-import androidx.lifecycle.LiveData
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
+import com.pilove.vodovodinfo.utils.recognizeDates
 import com.pilove.vodovodinfo.utils.recognizeStreets
 import kotlinx.coroutines.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.sql.Date
+import java.util.Date
 import java.text.SimpleDateFormat
 import javax.inject.Inject
 
@@ -20,15 +20,18 @@ class NoticeServer @Inject constructor() {
     private var job: Job = Job()
 
     companion object {
-        var TAG = DEBUG_TAG
         var currentNumber = 2000
     }
 
-    fun getTodayNotices() {
+    fun getTodayNotices(): ArrayList<Notice> {
+
+        var result = ArrayList<Notice>()
+
         GlobalScope.launch {
             getNewestNoticeNumber()
-            getNewNotices()
+            result = getNewNotices()
         }
+        return result
     }
 
     private fun getNewestNoticeNumber() {
@@ -52,10 +55,10 @@ class NoticeServer @Inject constructor() {
                     currentNumber = stringic?.toInt() ?: 0
 
                 }
-                Log.d(TAG, "getting current number done: $currentNumber")
+                Log.d(DEBUG_TAG, "getting current number done: $currentNumber")
 
         } catch (e: Exception) {
-            Log.d(TAG, "An error while getting newest notice number: " + e.message)
+            Log.d(DEBUG_TAG, "An error while getting newest notice number: " + e.message)
         }
     }
 
@@ -63,57 +66,60 @@ class NoticeServer @Inject constructor() {
 
         var doc: Document? = null
         var element : Element?
-        var notices: LiveData<ArrayList<Notice>>
+        var notices = ArrayList<Notice>()
 
         try {
 
             element = Jsoup.connect(noticeUrl + currentNumber).get().body()
 
+            /* Notice html structure example
+            <div class="col-12 col-lg-8">
+                    <div class="col-12 mt-4">
+                        <p class="m-0">Objavljeno 14.08.2020 u 15:29</p>
+                        <h1 class="">Informacija o planiranim radovima na vodovodnoj mreži za dan  15. i 16.08.2020.  </h1>
+                        <p class="">U subotu, 15.08.2020.g., u okviru redovnih aktivnosti na održavanju vodovodnog sistema  izvodit će se radovi na popravkama kvarova u ulicama Alifakovac, Veliki Alifakovac i Brezanska.
+U nedelju, 16.08.2020. g., radovi na popravkama kvarova vršit će se u ulici Muhameda ef. Pandže.</p>
+                    </div></div>
+             */
             doc.let {
 
-                var obavijest = element!!.getElementsByClass("col-12 mt-4")
+                var noticeBody = element!!.getElementsByClass("col-12 mt-4")
+                var noticeElement = noticeBody.elementAt(0)
+                var timeReleased = noticeElement.child(0).text()
+                var title = noticeElement.child(1).text()
+                var noticeBodyText = noticeElement.child(2).text()
 
-                var stringic: String? = obavijest.text()
-                var noticeStr = obavijest.text()
-
-                val dateAndTime = noticeStr
+                val dateAndTime = timeReleased
                     .substringAfter("Objavljeno")
-                    .substringBefore("Obavještenje")
                     .removePrefix(" ")
 
                 val date = SimpleDateFormat("dd.MM.yyyy 'u' HH:mm")
-                    .parse(dateAndTime.removePrefix(" ")) as Date
-
-
-                stringic += "\n datum: ${date.toString()}"
-
-                val noticeText = noticeStr.substringAfter("Obavještenje")
-                stringic += "\n text: $noticeText"
+                    .parse(dateAndTime.removePrefix(" "))
 
                 var listOfStreets = ArrayList<String>()
 
-                recognizeStreets(noticeText).forEach {
-                    stringic += "\n $it"
+                recognizeStreets(noticeBodyText).forEach {
                     listOfStreets.add(it)
                 }
 
-                val firstStreet = recognizeStreets(noticeText)[0]
-                stringic += "\n street to be recognized : $firstStreet"
+                val dates = ArrayList<Date>()
 
-                Log.d(TAG, stringic)
+                recognizeDates(noticeBodyText).forEach {
+                    dates.add(it)
+                }
 
-                 Notice(
-                    currentNoticeIdUrl,
-                    date,
-                    noticeText,
-                    listOfStreets
-                )
+                val newNotice = Notice(currentNumber, title, date, noticeBodyText, listOfStreets, dates)
+
+                Log.d(DEBUG_TAG, newNotice.toString())
+
+                notices.add(newNotice)
             }
 
         } catch (e: Exception) {
-            Log.d("TAG", "An    error happened while getting today notices: "+e.message)
+            Log.d("TAG", "An error happened while getting today notices: ${e.message}")
         }
-        return ArrayList<Notice>()
+
+        return notices
     }
 
 }

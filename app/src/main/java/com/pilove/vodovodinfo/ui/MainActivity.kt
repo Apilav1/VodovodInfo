@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
@@ -38,6 +39,10 @@ class MainActivity : AppCompatActivity() {
         //Places.initialize(applicationContext, R.string.google_maps_api_key.toString())
 
         viewModel.getNotices()
+
+        viewModel.notices.observe(this, Observer {
+            Log.d("MAINACT", it.size.toString())
+        })
 
     }
 

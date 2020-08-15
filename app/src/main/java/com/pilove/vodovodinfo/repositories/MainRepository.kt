@@ -19,7 +19,6 @@ class MainRepository
 
     fun getTenNoticesBeforeId(id: Int) = noticeDAO.getTenNoticesBeforeId(id)
 
-    fun getNoticesFromServer() {
-        noticeServer.getTodayNotices()
-    }
+    fun getNoticesFromServer() = noticeServer.getTodayNotices()
+
 }
