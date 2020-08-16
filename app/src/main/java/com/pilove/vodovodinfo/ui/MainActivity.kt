@@ -2,6 +2,8 @@ package com.pilove.vodovodinfo.ui
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.view.Window
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.viewModels
@@ -19,6 +21,7 @@ import com.pilove.vodovodinfo.ui.viewModels.MainViewModel
 import com.pilove.vodovodinfo.utils.recognizeStreets
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_notices.*
 import kotlinx.coroutines.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -28,21 +31,12 @@ import java.text.SimpleDateFormat
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    private val viewModel: MainViewModel by viewModels()
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         // Initialize the SDK
         //Places.initialize(applicationContext, R.string.google_maps_api_key.toString())
-
-        viewModel.getNotices()
-
-        viewModel.notices.observe(this, Observer {
-            Log.d("MAINACT", "Size of result: "+it.size.toString())
-        })
 
     }
 

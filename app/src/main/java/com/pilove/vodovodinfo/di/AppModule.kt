@@ -6,6 +6,7 @@ import com.pilove.vodovodinfo.data.NoticeServer
 import com.pilove.vodovodinfo.data.NoticeServerDao
 import com.pilove.vodovodinfo.other.Constants.NOTICE_DATABASE_NAME
 import com.pilove.vodovodinfo.db.NoticeDatabase
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,9 +31,5 @@ object AppModule {
     @Singleton
     @Provides
     fun provideNoticeDao(db: NoticeDatabase) = db.getNoticeDao()
-
-//    @Singleton
-//    @Provides
-//    fun provideNoticeServer(n: NoticeServerDao) = NoticeServer()
 
 }

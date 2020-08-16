@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/noticesFragment"
+          android:title="Obavještenja"
+          android:icon="@drawable/ic_baseline_notifications_24"
+        />
+
+    <item
+        android:title="Statistika"
+        android:icon="@drawable/ic_baseline_graphic_eq_24"
+        />
+</menu>

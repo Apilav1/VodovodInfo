@@ -118,7 +118,9 @@ class NoticeServer @Inject constructor() {
                 var title = noticeElement.child(1).text()
                 var noticeBodyText = noticeElement.child(2).text()
 
-                if(title.split(" ").toTypedArray().first() == "Služba")
+                val titleSplit = title.split(" ").toTypedArray()
+
+                if(titleSplit.first() == "Služba")
                     return@let
 
                 val dateAndTime = timeReleased
