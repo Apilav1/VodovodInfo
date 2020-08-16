@@ -11,13 +11,14 @@ class MainViewModel @ViewModelInject constructor(
     val mainRepository: MainRepository
 ): ViewModel() {
 
-//    val notices = MutableLiveData<ArrayList<Notice>>()
-//
-//    fun getNotices() = viewModelScope.launch {
-//        notices.postValue(mainRepository.getNoticesFromServer())
-//    }
+    val notices = MutableLiveData<ArrayList<Notice>>()
 
-    val notices = liveData<ArrayList<Notice>>(Dispatchers.IO) {
-        mainRepository.getNoticesFromServer()
+    fun getNotices() = viewModelScope.launch {
+        notices.postValue(mainRepository.getNoticesFromServer())
     }
+
+//    val notices = liveData<ArrayList<Notice>>(Dispatchers.IO) {
+//        val data = mainRepository.getNoticesFromServer()
+//        emit(data)
+//    }
 }

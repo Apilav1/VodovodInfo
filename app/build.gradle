@@ -107,4 +107,8 @@ dependencies {
     // Easy Permissions
     implementation 'pub.devrel:easypermissions:3.0.0'
 
+    //livedata
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.2.0-alpha01'
+
+
 }

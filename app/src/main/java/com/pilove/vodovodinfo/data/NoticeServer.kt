@@ -13,6 +13,21 @@ import java.util.*
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 
+/* Notice html structure example
+            <div class="col-12 col-lg-8">
+              <div class="col-12 mt-4">
+                <p class="m-0">Objavljeno 14.08.2020 u 15:29</p>
+                <h1 class="">Informacija o planiranim radovima
+                    na vodovodnoj mreži za dan  15. i 16.08.2020.  </h1>
+                <p class="">U subotu, 15.08.2020.g., u okviru redovnih aktivnosti
+                 na održavanju vodovodnog sistema  izvodit će se radovi na popravkama
+                 kvarova u ulicama Alifakovac, Veliki Alifakovac i Brezanska.
+                 U nedelju, 16.08.2020. g., radovi na popravkama kvarova vršit
+                 će se u ulici Muhameda ef. Pandže.</p>
+              </div>
+             </div>
+  */
+
 class NoticeServer @Inject constructor() {
 
     val currentNoticeIdUrl = "http://www.viksa.ba/vijesti/str/1"
@@ -20,28 +35,20 @@ class NoticeServer @Inject constructor() {
 
     private var job: Job = Job()
 
-    companion object {
-        var latestNoticeId = 2500
+    private var latestNoticeId = 2500
+
+    fun getNotices(): ArrayList<Notice> {
+
+        latestNoticeId = getNewestNoticeId()
+
+        return getNewNotices()
     }
 
-    fun getTodayNotices(): ArrayList<Notice> {
-
-        var result = ArrayList<Notice>()
-
-        GlobalScope.launch {
-            getNewestNoticeId()
-            result = getNewNotices()
-        }
-        return result
-    }
-
-    private fun getNewestNoticeId() {
+    private fun getNewestNoticeId(): Int  = runBlocking(Dispatchers.IO) {
         var doc: Document? = null
-        var stringic: String?
+        var result: String? = null
 
         try {
-
-
                 doc = Jsoup.connect(currentNoticeIdUrl).get()
 
                 doc.let {
@@ -49,26 +56,26 @@ class NoticeServer @Inject constructor() {
                     var elemt: Element? =
                         it?.getElementsByAttributeValue("id", "obavjestenja")?.first()
 
-                    stringic = elemt?.getElementsByClass("row ml-0 mr-0 mb-3 nodec")?.html()?.
+                    result = elemt?.getElementsByClass("row ml-0 mr-0 mb-3 nodec")?.html()?.
                     substringBefore("\">")?.
                     substringAfterLast("/")
 
-                    latestNoticeId = stringic?.toInt() ?: 0
+                    Log.d(DEBUG_TAG, result)
 
                 }
-                Log.d(DEBUG_TAG, "getting current number done: $latestNoticeId")
 
         } catch (e: Exception) {
-            Log.d(DEBUG_TAG, "An error while getting newest notice number: " + e.message)
+            Log.d(DEBUG_TAG, "Error while getting newest notice number: " + e.message)
         }
+
+        result?.toInt() ?: 0
     }
 
-     private suspend fun getNewNotices(): ArrayList<Notice> {
+     private fun getNewNotices(): ArrayList<Notice> = runBlocking(Dispatchers.IO) {
 
         var notices = ArrayList<Notice>()
         var noticeId = latestNoticeId
 
-         CoroutineScope(Dispatchers.IO).launch {
              while (true) {
 
                  var notice = getNextNotice(noticeId--)
@@ -80,16 +87,19 @@ class NoticeServer @Inject constructor() {
                          notice.text != "default") {
                      break
                  }
-                 else if(notice.text != "default")
+                 else if(notice.text != "default"){
                      notices.add(notice)
-
-                 delay(1000L)
+                 }
              }
+
+         notices.forEach {
+             Log.d(DEBUG_TAG, it.toString())
          }
-        return notices
+
+         notices
     }
 
-    private suspend fun getNextNotice(noticeId: Int): Notice {
+    private fun getNextNotice(noticeId: Int): Notice {
 
         var element : Element?
         var doc: Document? = null
@@ -99,16 +109,8 @@ class NoticeServer @Inject constructor() {
 
             element = Jsoup.connect(noticeUrl + noticeId).get().body()
 
-            /* Notice html structure example
-            <div class="col-12 col-lg-8">
-                    <div class="col-12 mt-4">
-                        <p class="m-0">Objavljeno 14.08.2020 u 15:29</p>
-                        <h1 class="">Informacija o planiranim radovima na vodovodnoj mreži za dan  15. i 16.08.2020.  </h1>
-                        <p class="">U subotu, 15.08.2020.g., u okviru redovnih aktivnosti na održavanju vodovodnog sistema  izvodit će se radovi na popravkama kvarova u ulicama Alifakovac, Veliki Alifakovac i Brezanska.
-U nedelju, 16.08.2020. g., radovi na popravkama kvarova vršit će se u ulici Muhameda ef. Pandže.</p>
-                    </div></div>
-             */
             doc.let {
+                //example of html structure that is being scraped is at the beginning of file
 
                 var noticeBody = element!!.getElementsByClass("col-12 mt-4")
                 var noticeElement = noticeBody.elementAt(0)
@@ -147,7 +149,7 @@ U nedelju, 16.08.2020. g., radovi na popravkama kvarova vršit će se u ulici Mu
             }
 
         } catch (e: Exception) {
-            Log.d(DEBUG_TAG, "An error happened while getting today notices: ${e.message}")
+            Log.d(DEBUG_TAG, "Error happened while getting today notices: ${e.message}")
         }
 
         return Notice()
