@@ -29,13 +29,13 @@ class NoticeServer @Inject constructor() {
         var result = ArrayList<Notice>()
 
         GlobalScope.launch {
-            getNewestNoticeNumber()
+            getNewestNoticeId()
             result = getNewNotices()
         }
         return result
     }
 
-    private fun getNewestNoticeNumber() {
+    private fun getNewestNoticeId() {
         var doc: Document? = null
         var stringic: String?
 
@@ -63,7 +63,7 @@ class NoticeServer @Inject constructor() {
         }
     }
 
-     private fun getNewNotices(): ArrayList<Notice> {
+     private suspend fun getNewNotices(): ArrayList<Notice> {
 
         var notices = ArrayList<Notice>()
         var noticeId = latestNoticeId
@@ -89,7 +89,7 @@ class NoticeServer @Inject constructor() {
         return notices
     }
 
-    private fun getNextNotice(noticeId: Int): Notice {
+    private suspend fun getNextNotice(noticeId: Int): Notice {
 
         var element : Element?
         var doc: Document? = null
