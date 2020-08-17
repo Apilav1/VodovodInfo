@@ -41,11 +41,12 @@
         />
 
     <View
+        android:id="@+id/blackLineAboveTheMap"
         android:layout_width="match_parent"
         android:layout_height="2dp"
         app:layout_constraintBottom_toTopOf="@id/mapView"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="@id/mapView"
+        app:layout_constraintRight_toRightOf="@id/mapView"
         android:background="@android:color/black"
         />
 
@@ -57,7 +58,51 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintVertical_bias="1"
         />
+
+    <Button
+        android:id="@+id/btnResizeMapDown"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="4dp"
+        android:background="@drawable/ic_baseline_arrow_drop_down_24"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="@id/mapView" />
+
+
+    <View
+        android:id="@+id/bottomTab"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:background="@android:color/white"
+        android:visibility="gone"
+        />
+
+    <ImageView
+        android:id="@+id/googleMapsLogo"
+        android:layout_width="160dp"
+        android:layout_height="100dp"
+        app:layout_constraintBottom_toBottomOf="@id/bottomTab"
+        android:background="@drawable/google_maps_icon_300x200"
+        app:layout_constraintTop_toTopOf="@id/bottomTab"
+        app:layout_constraintLeft_toLeftOf="@id/bottomTab"
+        android:visibility="gone"
+        android:scaleType="centerInside"
+        android:adjustViewBounds="true"
+        />
+
+    <Button
+        android:id="@+id/btnResizeMapUp"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="4dp"
+        android:background="@drawable/ic_baseline_arrow_drop_up_24"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/bottomTab"
+        android:visibility="gone"
+        />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

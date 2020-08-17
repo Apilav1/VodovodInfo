@@ -1,10 +1,13 @@
 package com.pilove.vodovodinfo.ui.fragments
 
+import android.annotation.SuppressLint
 import android.opengl.Visibility
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import androidx.activity.viewModels
+import androidx.core.view.marginBottom
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -48,7 +51,34 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         mapView.getMapAsync {
             map = it
         }
+
+        btnResizeMapDown.setOnClickListener {
+            toggleMap()
+        }
+        btnResizeMapUp.setOnClickListener {
+            toggleMap()
+        }
     }
+
+    private fun toggleMap() {
+        if(mapView.visibility == View.VISIBLE) {
+            mapView.visibility = View.GONE
+            blackLineAboveTheMap.visibility = View.GONE
+            btnResizeMapDown.visibility = View.GONE
+            btnResizeMapUp.visibility = View.VISIBLE
+            bottomTab.visibility = View.VISIBLE
+            googleMapsLogo.visibility = View.VISIBLE
+        } else {
+            mapView.visibility = View.VISIBLE
+            blackLineAboveTheMap.visibility = View.VISIBLE
+            btnResizeMapDown.visibility = View.VISIBLE
+            btnResizeMapUp.visibility = View.GONE
+            bottomTab.visibility = View.GONE
+            googleMapsLogo.visibility = View.GONE
+        }
+    }
+
+
 
     private fun setupRecycleView() = rvNotices.apply {
         noticeAdapter = NoticeAdapter()
