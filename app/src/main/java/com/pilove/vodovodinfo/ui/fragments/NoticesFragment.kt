@@ -10,8 +10,10 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.gms.maps.GoogleMap
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.adapters.NoticeAdapter
+import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.ui.viewModels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
@@ -25,8 +27,12 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
 
     private lateinit var noticeAdapter: NoticeAdapter
 
+    private var map: GoogleMap? = null
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        mapView.onCreate(savedInstanceState)
 
         //TODO: fix progress bar
         progress_bar.visibility = View.GONE
@@ -39,6 +45,9 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
              progress_bar.visibility = View.GONE
         })
 
+        mapView.getMapAsync {
+            map = it
+        }
     }
 
     private fun setupRecycleView() = rvNotices.apply {
@@ -46,5 +55,30 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         adapter = noticeAdapter
         layoutManager = LinearLayoutManager(requireContext())
         this.addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mapView?.onResume()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        mapView?.onStart()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        mapView?.onStop()
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        mapView?.onLowMemory()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        mapView?.onSaveInstanceState(outState)
     }
 }
