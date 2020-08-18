@@ -1,8 +1,11 @@
-package com.pilove.vodovodinfo.db
+package com.pilove.vodovodinfo.data
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.pilove.vodovodinfo.data.Converters
+import com.pilove.vodovodinfo.data.Notice
+import com.pilove.vodovodinfo.data.NoticeDAO
 
 @Database(
     entities = [Notice::class],

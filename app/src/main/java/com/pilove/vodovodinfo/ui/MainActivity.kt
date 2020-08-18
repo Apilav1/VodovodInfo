@@ -1,11 +1,15 @@
 package com.pilove.vodovodinfo.ui
 
+import android.content.IntentFilter
+import android.graphics.Color
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.Window
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.google.android.gms.common.api.ApiException
@@ -15,6 +19,8 @@ import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.RectangularBounds
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import com.google.android.material.snackbar.Snackbar
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.repositories.MainRepository
 import com.pilove.vodovodinfo.ui.viewModels.MainViewModel
@@ -30,19 +36,51 @@ import java.text.SimpleDateFormat
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    private var mSnackBar: Snackbar? = null
+
+    private val viewModel: MainViewModel by viewModels()
+
+    private var wasConnected = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        viewModel.getConnectionStatus(this)
+
+        viewModel.connectionLiveData.observe(this, Observer { isConnected ->
+            if(!isConnected) {
+                val message = "Please check your internet connection"
+                mSnackBar = Snackbar.make(findViewById(android.R.id.content),
+                    message, Snackbar.LENGTH_LONG)
+                mSnackBar?.apply {
+                    duration = BaseTransientBottomBar.LENGTH_INDEFINITE
+                    show()
+                }
+                wasConnected = false
+            } else {
+                mSnackBar?.dismiss()
+                val message = "Connected"
+
+                if(!wasConnected)
+                    mSnackBar = Snackbar.make(findViewById(android.R.id.content),
+                        message, Snackbar.LENGTH_LONG)
+                    mSnackBar?.apply {
+                        duration = BaseTransientBottomBar.LENGTH_LONG
+                        setTextColor(Color.WHITE)
+                        setBackgroundTint(resources.getColor(R.color.snackBarGreen))
+                        show()
+                    }
+                wasConnected = true
+            }
+        })
 
         // Initialize the SDK
         //Places.initialize(applicationContext, R.string.google_maps_api_key.toString())
 
     }
 
-
-
-//    fun findPlaces(query: String) {
+    //    fun findPlaces(query: String) {
 //        val placesClient = Places.createClient(this)
 //
 //        // Create a new token for the autocomplete session. Pass this to FindAutocompletePredictionsRequest,

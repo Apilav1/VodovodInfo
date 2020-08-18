@@ -2,11 +2,8 @@ package com.pilove.vodovodinfo.di
 
 import android.content.Context
 import androidx.room.Room
-import com.pilove.vodovodinfo.data.NoticeServer
-import com.pilove.vodovodinfo.data.NoticeServerDao
 import com.pilove.vodovodinfo.other.Constants.NOTICE_DATABASE_NAME
-import com.pilove.vodovodinfo.db.NoticeDatabase
-import dagger.Binds
+import com.pilove.vodovodinfo.data.NoticeDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,5 +28,10 @@ object AppModule {
     @Singleton
     @Provides
     fun provideNoticeDao(db: NoticeDatabase) = db.getNoticeDao()
+
+    @Singleton
+    @Provides
+    fun provideContext(@ApplicationContext app: Context) = app
+
 
 }

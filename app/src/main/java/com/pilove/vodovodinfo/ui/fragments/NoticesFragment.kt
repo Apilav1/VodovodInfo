@@ -32,10 +32,13 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
 
     private var map: GoogleMap? = null
 
+    private var isConnected: Boolean = false
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         mapView.onCreate(savedInstanceState)
+
 
         //TODO: fix progress bar
         progress_bar.visibility = View.GONE
@@ -46,10 +49,17 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         viewModel.notices.observe(viewLifecycleOwner, Observer {
              noticeAdapter.submitList(it)
              progress_bar.visibility = View.GONE
+             noticeAdapter.notifyDataSetChanged()
         })
 
-        mapView.getMapAsync {
-            map = it
+        viewModel.connectionLiveData.observe(viewLifecycleOwner, Observer {
+             isConnected = it
+        })
+
+        if(isConnected) {
+            mapView.getMapAsync {
+                map = it
+            }
         }
 
         btnResizeMapDown.setOnClickListener {

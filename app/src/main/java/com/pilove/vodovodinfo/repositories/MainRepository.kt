@@ -1,8 +1,10 @@
 package com.pilove.vodovodinfo.repositories
 
+import android.content.Context
 import com.pilove.vodovodinfo.data.NoticeServer
-import com.pilove.vodovodinfo.db.Notice
-import com.pilove.vodovodinfo.db.NoticeDAO
+import com.pilove.vodovodinfo.data.Notice as DbNotice
+import com.pilove.vodovodinfo.data.NoticeDAO
+import com.pilove.vodovodinfo.networks.ConnectionLiveData
 import javax.inject.Inject
 
 class MainRepository
@@ -11,14 +13,17 @@ class MainRepository
     val noticeServer: NoticeServer
 ) {
 
-    suspend fun insertNotice(notice: Notice) = noticeDAO.insert(notice)
+    suspend fun insertNotice(notice: DbNotice) = noticeDAO.insert(notice)
 
-    suspend fun deleteNotice(notice: Notice) = noticeDAO.delete(notice)
+    suspend fun deleteNotice(notice: DbNotice) = noticeDAO.delete(notice)
 
     fun getLastTenNotices() = noticeDAO.getLastTenNotices()
 
     fun getTenNoticesBeforeId(id: Int) = noticeDAO.getTenNoticesBeforeId(id)
 
-    suspend fun getNoticesFromServer() = noticeServer.getNotices()
+    fun getNoticesFromServer() = noticeServer.getNotices()
+
+
+    fun getConnectionLiveData(context: Context) = ConnectionLiveData(context)
 
 }

@@ -49,20 +49,20 @@ class NoticeServer @Inject constructor() {
         var result: String? = null
 
         try {
-                doc = Jsoup.connect(currentNoticeIdUrl).get()
+            doc = Jsoup.connect(currentNoticeIdUrl).get()
 
-                doc.let {
+            doc.let {
 
-                    var elemt: Element? =
-                        it?.getElementsByAttributeValue("id", "obavjestenja")?.first()
+                var elemt: Element? =
+                    it?.getElementsByAttributeValue("id", "obavjestenja")?.first()
 
-                    result = elemt?.getElementsByClass("row ml-0 mr-0 mb-3 nodec")?.html()?.
-                    substringBefore("\">")?.
-                    substringAfterLast("/")
+                result = elemt?.getElementsByClass("row ml-0 mr-0 mb-3 nodec")?.html()?.
+                substringBefore("\">")?.
+                substringAfterLast("/")
 
-                    Log.d(DEBUG_TAG, result)
+                Log.d(DEBUG_TAG, result)
 
-                }
+            }
 
         } catch (e: Exception) {
             Log.d(DEBUG_TAG, "Error while getting newest notice number: " + e.message)
@@ -71,32 +71,32 @@ class NoticeServer @Inject constructor() {
         result?.toInt() ?: 0
     }
 
-     private fun getNewNotices(): ArrayList<Notice> = runBlocking(Dispatchers.IO) {
+    private fun getNewNotices(): ArrayList<Notice> = runBlocking(Dispatchers.IO) {
 
         var notices = ArrayList<Notice>()
         var noticeId = latestNoticeId
 
-             while (true) {
+        while (true) {
 
-                 var notice = getNextNotice(noticeId--)
-                 var noticeForBase = if(!notices.isEmpty()) notices.first()
-                                    else null
+            var notice = getNextNotice(noticeId--)
+            var noticeForBase = if(!notices.isEmpty()) notices.first()
+            else null
 
-                 if(!notices.isEmpty() &&
-                     notice.dateForComparison.before(noticeForBase?.dateForComparison) &&
-                         notice.text != "default") {
-                     break
-                 }
-                 else if(notice.text != "default"){
-                     notices.add(notice)
-                 }
-             }
+            if(!notices.isEmpty() &&
+                notice.dateForComparison.before(noticeForBase?.dateForComparison) &&
+                notice.text != "default") {
+                break
+            }
+            else if(notice.text != "default"){
+                notices.add(notice)
+            }
+        }
 
-         notices.forEach {
-             Log.d(DEBUG_TAG, it.toString())
-         }
+        notices.forEach {
+            Log.d(DEBUG_TAG, it.toString())
+        }
 
-         notices
+        notices
     }
 
     private fun getNextNotice(noticeId: Int): Notice {

@@ -7,8 +7,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.data.Notice
 import kotlinx.android.synthetic.main.item_notice.view.*
-import java.text.SimpleDateFormat
-import java.util.*
 import kotlin.collections.ArrayList
 
 class NoticeAdapter : RecyclerView.Adapter<NoticeAdapter.NoticeViewHolder>() {
