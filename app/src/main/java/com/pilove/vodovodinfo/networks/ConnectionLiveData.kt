@@ -9,8 +9,11 @@ import android.content.IntentFilter
 import android.net.*
 import android.os.Build
 import androidx.lifecycle.LiveData
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-class ConnectionLiveData(val context: Context) : LiveData<Boolean>() {
+class ConnectionLiveData (val context: Context) : LiveData<Boolean>() {
 
     private var connectivityManager: ConnectivityManager = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
 
@@ -107,12 +110,12 @@ class ConnectionLiveData(val context: Context) : LiveData<Boolean>() {
     }
 
      fun updateConnection() {
-//        val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
-//        postValue(activeNetwork?.isConnected == true)
-         if(connectivityManager == null || connectivityManager.isDefaultNetworkActive == null) {
-             postValue(false)
-         } else {
-             postValue(true)
-         }
+        val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
+        postValue(activeNetwork?.isConnected == true)
+//         if(connectivityManager.isDefaultNetworkActive) {
+//             postValue(true)
+//         } else {
+//             postValue(false)
+//         }
     }
 }

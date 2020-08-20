@@ -29,9 +29,5 @@ object AppModule {
     @Provides
     fun provideNoticeDao(db: NoticeDatabase) = db.getNoticeDao()
 
-    @Singleton
-    @Provides
-    fun provideContext(@ApplicationContext app: Context) = app
-
 
 }

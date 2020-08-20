@@ -1,6 +1,8 @@
 package com.pilove.vodovodinfo.data
 
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.utils.recognizeDates
 import com.pilove.vodovodinfo.utils.recognizeStreets
@@ -37,11 +39,23 @@ class NoticeServer @Inject constructor() {
 
     private var latestNoticeId = 2500
 
-    fun getNotices(): ArrayList<Notice> {
+    private var errorHappened = false
+
+    fun getNotices(): LiveData<List<Notice>> {
+
+        val result = MediatorLiveData<List<Notice>>()
+
+        errorHappened = false
 
         latestNoticeId = getNewestNoticeId()
 
-        return getNewNotices()
+        if(!errorHappened) {
+            result.postValue(getNewNotices())
+        }
+        else{
+            result.postValue(listOf())
+        }
+        return result
     }
 
     private fun getNewestNoticeId(): Int  = runBlocking(Dispatchers.IO) {
@@ -66,29 +80,34 @@ class NoticeServer @Inject constructor() {
 
         } catch (e: Exception) {
             Log.d(DEBUG_TAG, "Error while getting newest notice number: " + e.message)
+            errorHappened = true
         }
 
         result?.toInt() ?: 0
     }
 
-    private fun getNewNotices(): ArrayList<Notice> = runBlocking(Dispatchers.IO) {
+    private fun getNewNotices(): List<Notice> = runBlocking(Dispatchers.IO) {
 
         var notices = ArrayList<Notice>()
         var noticeId = latestNoticeId
 
-        while (true) {
+        withTimeout(5000L) {
+            while (true) {
 
-            var notice = getNextNotice(noticeId--)
-            var noticeForBase = if(!notices.isEmpty()) notices.first()
-            else null
+                if(errorHappened) break
 
-            if(!notices.isEmpty() &&
-                notice.dateForComparison.before(noticeForBase?.dateForComparison) &&
-                notice.text != "default") {
-                break
-            }
-            else if(notice.text != "default"){
-                notices.add(notice)
+                var notice = getNextNotice(noticeId--)
+                var noticeForBase = if (!notices.isEmpty()) notices.first()
+                else null
+
+                if (!notices.isEmpty() &&
+                    notice.dateForComparison.before(noticeForBase?.dateForComparison) &&
+                    notice.text != "default"
+                ) {
+                    break
+                } else if (notice.text != "default") {
+                    notices.add(notice)
+                }
             }
         }
 
@@ -96,7 +115,7 @@ class NoticeServer @Inject constructor() {
             Log.d(DEBUG_TAG, it.toString())
         }
 
-        notices
+        notices as List<Notice>
     }
 
     private fun getNextNotice(noticeId: Int): Notice {
@@ -152,6 +171,7 @@ class NoticeServer @Inject constructor() {
 
         } catch (e: Exception) {
             Log.d(DEBUG_TAG, "Error happened while getting today notices: ${e.message}")
+            errorHappened = true
         }
 
         return Notice()

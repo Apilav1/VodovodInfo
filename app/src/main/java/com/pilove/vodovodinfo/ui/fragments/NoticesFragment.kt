@@ -1,13 +1,8 @@
 package com.pilove.vodovodinfo.ui.fragments
 
-import android.annotation.SuppressLint
-import android.opengl.Visibility
 import android.os.Bundle
 import android.util.Log
-import android.view.MotionEvent
 import android.view.View
-import androidx.activity.viewModels
-import androidx.core.view.marginBottom
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -16,12 +11,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.maps.GoogleMap
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.adapters.NoticeAdapter
+import com.pilove.vodovodinfo.data.Notice
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.ui.viewModels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_notices.*
-import kotlinx.android.synthetic.main.item_notice.*
 
 @AndroidEntryPoint
 class NoticesFragment : Fragment(R.layout.fragment_notices) {
@@ -40,6 +34,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         mapView.onCreate(savedInstanceState)
 
 
+        viewModel.getConnectionStatus(requireContext())
         //TODO: fix progress bar
         progress_bar.visibility = View.GONE
         setupRecycleView()
@@ -47,13 +42,21 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         viewModel.getNotices()
 
         viewModel.notices.observe(viewLifecycleOwner, Observer {
-             noticeAdapter.submitList(it)
+            if(it == null || it.isEmpty()) return@Observer
+             noticeAdapter.submitList(it as ArrayList<Notice>)
              progress_bar.visibility = View.GONE
              noticeAdapter.notifyDataSetChanged()
         })
 
+
+
         viewModel.connectionLiveData.observe(viewLifecycleOwner, Observer {
              isConnected = it
+             if(it) {
+                 progress_bar.visibility = View.VISIBLE
+                 viewModel.getNotices()
+                 progress_bar.visibility = View.GONE
+             }
         })
 
         if(isConnected) {
