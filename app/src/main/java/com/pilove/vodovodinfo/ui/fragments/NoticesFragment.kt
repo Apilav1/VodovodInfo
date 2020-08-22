@@ -105,13 +105,11 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
         mapView.getMapAsync { googleMap ->
             map = googleMap
         }
-        Log.d(TAG, "setti")
         getDeviceLocation()
     }
 
     private fun mapSetUp() = CoroutineScope(Dispatchers.Default).launch {
 
-        Log.d(TAG, "setti2")
         delay(2000L)
         notices?.forEach { notice ->
             notice.streets.forEach { street ->
