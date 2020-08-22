@@ -39,8 +39,6 @@ import java.text.SimpleDateFormat
 class MainActivity : AppCompatActivity() {
     private var mSnackBar: Snackbar? = null
 
-    private val viewModel: MainViewModel by viewModels()
-
     private var wasConnected = true
 
     override fun onCreate(savedInstanceState: Bundle?) {

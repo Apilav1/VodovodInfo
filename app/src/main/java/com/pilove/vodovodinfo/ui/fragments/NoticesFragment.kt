@@ -46,8 +46,6 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
 
     private var map: GoogleMap? = null
 
-    private var isConnected: Boolean = false
-
     private var locationPermissionGranted = true
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -84,11 +82,8 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
                 viewModel.insertNotices(it)
                 progress_bar.visibility = View.GONE
 
-                if(viewModel.isConnected) {
-                    mapView.getMapAsync { googleMap ->
-                        map = googleMap
-                    }
-                    getDeviceLocation()
+                if(viewModel.isConnected && isPermissionGranted) {
+                    startMap()
                 }
             }
         })
@@ -106,8 +101,18 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
         }
     }
 
+    private fun startMap() {
+        mapView.getMapAsync { googleMap ->
+            map = googleMap
+        }
+        Log.d(TAG, "setti")
+        getDeviceLocation()
+    }
+
     private fun mapSetUp() = CoroutineScope(Dispatchers.Default).launch {
 
+        Log.d(TAG, "setti2")
+        delay(2000L)
         notices?.forEach { notice ->
             notice.streets.forEach { street ->
                 geoLocate(street)
@@ -122,7 +127,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
         isMapSet = true
     }
 
-    private suspend fun geoLocate(street: String) = GlobalScope.launch(Dispatchers.Default)     {
+    private suspend fun geoLocate(street: String) = GlobalScope.launch(Dispatchers.IO)     {
         val geocoder = Geocoder(requireContext())
         try {
             val result = geocoder.getFromLocationName("Sarajevo $street", 1)
@@ -248,6 +253,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
 
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
          isPermissionGranted = true
+         startMap()
     }
 
     override fun onRequestPermissionsResult(
