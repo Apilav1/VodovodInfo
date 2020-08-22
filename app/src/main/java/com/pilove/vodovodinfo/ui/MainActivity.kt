@@ -22,6 +22,7 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import com.pilove.vodovodinfo.R
+import com.pilove.vodovodinfo.networks.ConnectionLiveData
 import com.pilove.vodovodinfo.repositories.MainRepository
 import com.pilove.vodovodinfo.ui.viewModels.MainViewModel
 import com.pilove.vodovodinfo.utils.recognizeStreets
@@ -46,9 +47,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        viewModel.getConnectionStatus(this)
-
-        viewModel.connectionLiveData.observe(this, Observer { isConnected ->
+        ConnectionLiveData(this).observe(this, Observer { isConnected ->
             if(!isConnected) {
                 val message = "Please check your internet connection"
                 mSnackBar = Snackbar.make(findViewById(android.R.id.content),

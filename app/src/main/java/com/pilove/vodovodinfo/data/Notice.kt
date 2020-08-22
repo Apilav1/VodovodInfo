@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat
 @Entity(tableName = "Notices")
 data class Notice (
     var date: Date = Date(0L),
+    var dateForComparison: Date = Date(0L),
     var title: String = "Default",
     var text: String = "Default"
 ) {
@@ -21,15 +22,11 @@ data class Notice (
                 dateForComparison: Date,
                 text: String,
                 streets: ArrayList<String>,
-                dates: ArrayList<Date>) : this(date, title, text) {
+                dates: ArrayList<Date>) : this(date, dateForComparison, title, text) {
         this.id = id
-        this.dateForComparison = dateForComparison
         this.streets = streets
         this.dates = dates
     }
-
-    @Ignore
-    var dateForComparison = Date(0L)
 
     @Ignore
     var streets: ArrayList<String> = ArrayList()

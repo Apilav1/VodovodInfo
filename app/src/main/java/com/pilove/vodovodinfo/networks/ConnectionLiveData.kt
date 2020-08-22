@@ -23,6 +23,7 @@ class ConnectionLiveData (val context: Context) : LiveData<Boolean>() {
         .addTransportType(android.net.NetworkCapabilities.TRANSPORT_CELLULAR)
         .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
 
+
     override fun onActive() {
         super.onActive()
 

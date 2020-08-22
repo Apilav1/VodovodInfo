@@ -3,6 +3,7 @@ package com.pilove.vodovodinfo.data
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.utils.recognizeDates
 import com.pilove.vodovodinfo.utils.recognizeStreets
@@ -43,7 +44,7 @@ class NoticeServer @Inject constructor() {
 
     fun getNotices(): LiveData<List<Notice>> {
 
-        val result = MediatorLiveData<List<Notice>>()
+       val result = MutableLiveData<List<Notice>>()
 
         errorHappened = false
 

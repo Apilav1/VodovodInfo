@@ -10,55 +10,32 @@ import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.repositories.MainRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.Main
 
 class MainViewModel @ViewModelInject constructor(
     val mainRepository: MainRepository,
     @ApplicationContext private val app: Context
 ): ViewModel() {
 
-    val notices = MediatorLiveData<List<Notice>>()
-    val resultFromDb = mainRepository.getLastTenNotices()
-    val resultFromServer = mainRepository.getNoticesFromServer()
+    var isConnected = false
 
-    init {
-        notices.addSource(resultFromDb) { result->
-            if(connectionLiveData.value == false)
-                notices.value = result
-        }
-        notices.addSource(resultFromServer as LiveData<List<Notice>>) { result ->
-            if(connectionLiveData.value == true)
-                notices.value = result as List<Notice>
+    val notices: LiveData<List<Notice>> = ConnectionLiveData(app).switchMap {
+        isConnected = it
+        if (it) {
+           mainRepository.getNoticesFromServer()
+        } else {
+            mainRepository.getNoticesFromDb()
         }
     }
 
 
-     fun getNotices() = viewModelScope.launch {
-         delay(1000L)
-         when (connectionLiveData.value) {
-             false -> resultFromDb.value?.let {
-                 Log.d(DEBUG_TAG, "SOURCE JE LOKALNO")
-                 notices.value = it
-             }
-             true -> {
-                 Log.d(DEBUG_TAG, "SOURCE JE server")
-                 mainRepository.getNoticesFromServer()
-                 (resultFromServer as LiveData<List<Notice>>).value?.let {
-                     notices.value = it
-                     it.forEach { notice ->
-                       mainRepository.insertNotice(notice)
-                     }
-                 }
-             }
-             else -> {
-                 Log.d(DEBUG_TAG, "SOURCE JE else")
-             }
-         }
-     }
-
-
-     var connectionLiveData = ConnectionLiveData(app)
-
-    fun getConnectionStatus(context: Context) {
-        connectionLiveData = mainRepository.getConnectionLiveData(context)
+    fun insertNotices(notices: List<Notice>?) = viewModelScope.launch(Dispatchers.IO) {
+        if(!isConnected) return@launch
+        notices?.let {
+            it.forEach { notice ->
+                mainRepository.insertNotice(notice)
+            }
+        }
     }
+
 }

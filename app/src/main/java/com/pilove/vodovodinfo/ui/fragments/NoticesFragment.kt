@@ -1,32 +1,29 @@
 package com.pilove.vodovodinfo.ui.fragments
 
 import android.Manifest
-import android.content.pm.PackageManager
+import android.graphics.Color
+import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.os.Looper
 import android.util.Log
 import android.view.View
-import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.bumptech.glide.util.Util
-import com.google.android.gms.location.*
-import com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.adapters.NoticeAdapter
 import com.pilove.vodovodinfo.data.Notice
-import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
-import com.pilove.vodovodinfo.other.Constants.FASTEST_LOCATION_INTERVAL
-import com.pilove.vodovodinfo.other.Constants.LOCATION_UPDATE_INTERVAL
 import com.pilove.vodovodinfo.other.Constants.REQUEST_CODE_LOCATION_PERMISSION
 import com.pilove.vodovodinfo.ui.viewModels.MainViewModel
 import com.pilove.vodovodinfo.utils.PermissionsUtil
@@ -45,6 +42,8 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
 
     private lateinit var noticeAdapter: NoticeAdapter
 
+    private var notices: ArrayList<Notice>? = null
+
     private var map: GoogleMap? = null
 
     private var isConnected: Boolean = false
@@ -57,55 +56,47 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
 
     private val defaultLocation = LatLng(-33.8523341, 151.2106085)
 
+    private val bounds = LatLngBounds.builder()
+
+    private var isSetOneOrMore = false
+
+    private var isMapSet = false
+
+    private var isPermissionGranted: Boolean = false
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        requestPermissions()
+        if(PermissionsUtil.hasLocationPermissions(requireContext())){
+            isPermissionGranted = true
+        } else {
+            requestPermissions()
+        }
+
+        setupRecycleView()
+
+        viewModel.notices.observe(viewLifecycleOwner, Observer {
+            it?.let {
+                notices = it as ArrayList<Notice>
+                noticeAdapter.submitList(notices!!)
+                noticeAdapter.notifyDataSetChanged()
+                viewModel.insertNotices(it)
+                progress_bar.visibility = View.GONE
+
+                if(viewModel.isConnected) {
+                    mapView.getMapAsync { googleMap ->
+                        map = googleMap
+                    }
+                    getDeviceLocation()
+                }
+            }
+        })
 
         mapView.onCreate(savedInstanceState)
 
 
-        viewModel.getConnectionStatus(requireContext())
-
-        setupRecycleView()
-
-        viewModel.getNotices()
-
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
-
-        viewModel.notices.observe(viewLifecycleOwner, Observer {
-            if(it == null || it.isEmpty()) return@Observer
-             showProgressBar()
-             noticeAdapter.submitList(it as ArrayList<Notice>)
-             noticeAdapter.notifyDataSetChanged()
-        })
-
-
-        viewModel.connectionLiveData.observe(viewLifecycleOwner, Observer { connected ->
-             isConnected = connected
-             if(connected) {
-                 showProgressBar()
-                 viewModel.getNotices()
-
-                 if(map == null)
-                 mapView.getMapAsync {
-                     map = it
-                     CoroutineScope(Dispatchers.Default).launch {
-                         delay(3_000)
-                         getDeviceLocation()
-                     }
-//                     map?.setOnMapLoadedCallback {
-//                         delay(1_000)
-//                         getDeviceLocation()
-//                     }
-                 }
-             }
-        })
-
-        textView.setOnClickListener {
-            Log.d(TAG, "GETTING location")
-                getDeviceLocation()
-        }
 
         btnResizeMapDown.setOnClickListener {
             toggleMap()
@@ -115,10 +106,62 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
         }
     }
 
-    private fun showProgressBar() = GlobalScope.launch(Main) {
-        progress_bar.visibility = View.VISIBLE
-        delay(1000L)
-        progress_bar.visibility = View.GONE
+    private fun mapSetUp() = CoroutineScope(Dispatchers.Default).launch {
+
+        notices?.forEach { notice ->
+            notice.streets.forEach { street ->
+                geoLocate(street)
+            }
+        }
+
+        delay(2000L)
+        withContext(Main) {
+            if (isSetOneOrMore)
+                zoomToSeeWholeTrack()
+        }
+        isMapSet = true
+    }
+
+    private suspend fun geoLocate(street: String) = GlobalScope.launch(Dispatchers.Default)     {
+        val geocoder = Geocoder(requireContext())
+        try {
+            val result = geocoder.getFromLocationName("Sarajevo $street", 1)
+            val address : Address = result[0]
+            if (result.isNotEmpty()) {
+                val latLng = LatLng(address.latitude, address.longitude)
+                bounds.include(latLng)
+                isSetOneOrMore = true
+                withContext(Main) {
+                    drawCircle(latLng)
+                }
+            }
+        } catch (e: Exception) {
+            Log.d(TAG, "geoLocate error: ${e.message}")
+        }
+    }
+
+    private fun drawCircle(point: LatLng) {
+
+        map!!.addCircle(
+            CircleOptions()
+                .center(point)
+                .radius(500.0)
+                .strokeColor(Color.RED)
+                .fillColor(0x30ff0000)
+                .strokeWidth(2F)
+             )
+    }
+
+    private fun zoomToSeeWholeTrack() {
+
+        map?.moveCamera(
+            CameraUpdateFactory.newLatLngBounds(
+                bounds.build(),
+                mapView.width,
+                mapView.height,
+                (mapView.height*0.10).toInt()
+            )
+        )
     }
 
     private fun toggleMap() {
@@ -203,7 +246,9 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
         }
     }
 
-    override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {}
+    override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
+         isPermissionGranted = true
+    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -248,15 +293,11 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
                 locationResult.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         Log.d(TAG, "TASK is success ${task.result?.latitude} ${task.result?.longitude}")
-                        // Set the map's camera position to the current location of the device.
                         lastKnownLocation = task.result
                         if (lastKnownLocation != null) {
-                            map?.moveCamera(
-                                CameraUpdateFactory.newLatLngZoom(
-                                LatLng(lastKnownLocation!!.latitude,
-                                    lastKnownLocation!!.longitude), DEFAULT_ZOOM.toFloat()))
                             map?.isMyLocationEnabled = true
                         }
+                        mapSetUp()
                     } else {
                         Log.d(TAG, "Current location is null. Using defaults.")
                         Log.e(TAG, "Exception: %s", task.exception)
@@ -281,7 +322,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
 //    }
 
     companion object {
-        private const val DEFAULT_ZOOM = 15
-        private const val TAG = "DEBUGIICCMAPIIIC"
+        private const val DEFAULT_ZOOM = 13
+        private const val TAG = "MAINACT"
     }
 }

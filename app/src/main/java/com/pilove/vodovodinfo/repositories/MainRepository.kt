@@ -24,15 +24,9 @@ class MainRepository
 
     suspend fun deleteNotice(notice: DbNotice) = noticeDAO.delete(notice)
 
-    fun getLastTenNotices(): LiveData<List<DbNotice>>
-            = noticeDAO.getLastTenNotices()
+    fun getNoticesFromDb(): LiveData<List<DbNotice>>
+            = noticeDAO.getNotices()
 
-//        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
-//            val job = async { noticeDAO.getLastTenNotices() }
-//            not.postValue(job.await().value as ArrayList<DbNotice>)
-//        }
-
-    fun getTenNoticesBeforeId(id: Int) = noticeDAO.getTenNoticesBeforeId(id)
 
     fun getNoticesFromServer() = noticeServer.getNotices()
 
