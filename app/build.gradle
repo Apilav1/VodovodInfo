@@ -112,5 +112,7 @@ dependencies {
     //livedata
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.2.0-alpha01'
 
-
+    // Kotlin + coroutines
+    def work_version = "2.4.0"
+    implementation "androidx.work:work-runtime-ktx:$work_version"
 }

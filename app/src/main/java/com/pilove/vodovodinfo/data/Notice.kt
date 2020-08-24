@@ -3,6 +3,7 @@ package com.pilove.vodovodinfo.data
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
+import com.pilove.vodovodinfo.other.Constants.DEFAULT_VALUE_FOR_NOTICE_TITLE
 import java.util.Date
 import java.text.SimpleDateFormat
 
@@ -10,8 +11,8 @@ import java.text.SimpleDateFormat
 data class Notice (
     var date: Date = Date(0L),
     var dateForComparison: Date = Date(0L),
-    var title: String = "Default",
-    var text: String = "Default"
+    var title: String = DEFAULT_VALUE_FOR_NOTICE_TITLE,
+    var text: String = DEFAULT_VALUE_FOR_NOTICE_TITLE
 ) {
     @PrimaryKey(autoGenerate = false)
     var id: Int = 2500

@@ -2,9 +2,9 @@ package com.pilove.vodovodinfo.data
 
 import android.util.Log
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
+import com.pilove.vodovodinfo.other.Constants.DEFAULT_VALUE_FOR_NOTICE_TITLE
 import com.pilove.vodovodinfo.utils.recognizeDates
 import com.pilove.vodovodinfo.utils.recognizeStreets
 import kotlinx.coroutines.*
@@ -38,8 +38,6 @@ class NoticeServer @Inject constructor() {
 
     private var job: Job = Job()
 
-    private var latestNoticeId = 2500
-
     private var errorHappened = false
 
     fun getNotices(): LiveData<List<Notice>> {
@@ -59,7 +57,7 @@ class NoticeServer @Inject constructor() {
         return result
     }
 
-    private fun getNewestNoticeId(): Int  = runBlocking(Dispatchers.IO) {
+    fun getNewestNoticeId(): Int  = runBlocking(Dispatchers.IO) {
         var doc: Document? = null
         var result: String? = null
 
@@ -87,7 +85,7 @@ class NoticeServer @Inject constructor() {
         result?.toInt() ?: 0
     }
 
-    private fun getNewNotices(): List<Notice> = runBlocking(Dispatchers.IO) {
+    fun getNewNotices(): List<Notice> = runBlocking(Dispatchers.IO) {
 
         var notices = ArrayList<Notice>()
         var noticeId = latestNoticeId
@@ -103,10 +101,10 @@ class NoticeServer @Inject constructor() {
 
                 if (!notices.isEmpty() &&
                     notice.dateForComparison.before(noticeForBase?.dateForComparison) &&
-                    notice.text != "default"
+                    notice.text != DEFAULT_VALUE_FOR_NOTICE_TITLE
                 ) {
                     break
-                } else if (notice.text != "default") {
+                } else if (notice.text != DEFAULT_VALUE_FOR_NOTICE_TITLE) {
                     notices.add(notice)
                 }
             }
@@ -119,7 +117,7 @@ class NoticeServer @Inject constructor() {
         notices as List<Notice>
     }
 
-    private fun getNextNotice(noticeId: Int): Notice {
+    fun getNextNotice(noticeId: Int): Notice {
 
         var element : Element?
         var doc: Document? = null
@@ -176,6 +174,10 @@ class NoticeServer @Inject constructor() {
         }
 
         return Notice()
+    }
+
+    companion object {
+        var latestNoticeId = 2599
     }
 
 }

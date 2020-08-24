@@ -62,42 +62,49 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
 
     private var isPermissionGranted: Boolean = false
 
+    private var isGPRFailed: Boolean = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if(PermissionsUtil.hasLocationPermissions(requireContext())){
-            isPermissionGranted = true
-        } else {
-            requestPermissions()
-        }
-
-        setupRecycleView()
-
-        viewModel.notices.observe(viewLifecycleOwner, Observer {
-            it?.let {
-                notices = it as ArrayList<Notice>
-                noticeAdapter.submitList(notices!!)
-                noticeAdapter.notifyDataSetChanged()
-                viewModel.insertNotices(it)
-                progress_bar.visibility = View.GONE
-
-                if(viewModel.isConnected && isPermissionGranted) {
-                    startMap()
-                }
-            }
-        })
-
-        mapView.onCreate(savedInstanceState)
-
-
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
+//        if(PermissionsUtil.hasLocationPermissions(requireContext())){
+//            isPermissionGranted = true
+//        } else {
+//            requestPermissions()
+//        }
+//
+//        setupRecycleView()
+//
+//        //TODO: resumed fragment map redrawing circles problem
+//
+//        viewModel.notices.observe(viewLifecycleOwner, Observer {
+//            it?.let {
+//                notices = it as ArrayList<Notice>
+//                noticeAdapter.submitList(notices!!)
+//                noticeAdapter.notifyDataSetChanged()
+//                viewModel.insertNotices(it)
+//                progress_bar.visibility = View.GONE
+//
+//                if(viewModel.isConnected && isPermissionGranted) {
+//                    startMap()
+//                }
+//            }
+//        })
+//
+//        mapView.onCreate(savedInstanceState)
+//
+//
+//        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
         btnResizeMapDown.setOnClickListener {
             toggleMap()
         }
         btnResizeMapUp.setOnClickListener {
             toggleMap()
+        }
+        btnRetry.setOnClickListener {
+            mapSetUp()
+            it.visibility = View.GONE
         }
     }
 
@@ -110,10 +117,13 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
 
     private fun mapSetUp() = CoroutineScope(Dispatchers.Default).launch {
 
-        delay(2000L)
-        notices?.forEach { notice ->
-            notice.streets.forEach { street ->
-                geoLocate(street)
+        withTimeout(6000L) {
+            delay(2000L)
+            notices?.forEach { notice ->
+                notice.streets.forEach { street ->
+                    if(!isGPRFailed)
+                        geoLocate(street)
+                }
             }
         }
 
@@ -122,7 +132,12 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
             if (isSetOneOrMore)
                 zoomToSeeWholeTrack()
         }
+
         isMapSet = true
+
+        if(isGPRFailed) {
+            btnRetry.visibility = View.VISIBLE
+        }
     }
 
     private suspend fun geoLocate(street: String) = GlobalScope.launch(Dispatchers.IO)     {
@@ -140,6 +155,8 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
             }
         } catch (e: Exception) {
             Log.d(TAG, "geoLocate error: ${e.message}")
+            if(e.message.equals("grpc failed"))
+                isGPRFailed = true
         }
     }
 
@@ -162,7 +179,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
                 bounds.build(),
                 mapView.width,
                 mapView.height,
-                (mapView.height*0.10).toInt()
+                (mapView.height*0.15).toInt()
             )
         )
     }
@@ -196,27 +213,27 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
 
     override fun onResume() {
         super.onResume()
-        mapView?.onResume()
+//        mapView?.onResume()
     }
 
     override fun onStart() {
         super.onStart()
-        mapView?.onStart()
+//        mapView?.onStart()
     }
 
     override fun onStop() {
         super.onStop()
-        mapView?.onStop()
+//        mapView?.onStop()
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
-        mapView?.onLowMemory()
+//        mapView?.onLowMemory()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        mapView?.onSaveInstanceState(outState)
+//        mapView?.onSaveInstanceState(outState)
     }
 
     private fun requestPermissions() {
