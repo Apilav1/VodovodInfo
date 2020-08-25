@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">VodovodInfo</string>
+    <string name="PERMISSION_REQUEST_TEXT">Dozvolite rad aplikacije</string>
+    <string name="ERROR_TEXT">Desila se greška, molimo pokušajte opet</string>
+    <string name="SETUP_DISCLAMER">Napomena: U slučaju da je ovo vaša trenutna lokacija, vašu stalnu adresu življenja možete postaviti naknadno u postavkama aplikacije</string>
 </resources>

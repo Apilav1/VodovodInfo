@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:id="@+id/tvTitleSetup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Da li je ovo vaša stalna adresa?"
+        android:textSize="20dp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginTop="32dp"
+        />
+
+    <TextView
+        android:id="@+id/tvAddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="address"
+        app:layout_constraintTop_toBottomOf="@id/tvTitleSetup"
+        app:layout_constraintLeft_toLeftOf="@id/tvTitleSetup"
+        app:layout_constraintRight_toRightOf="@id/tvTitleSetup"
+        app:layout_constraintBottom_toTopOf="@id/mapViewSetup"
+        android:layout_marginBottom="4dp"
+        android:textSize="18dp"
+        />
+
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/mapViewSetup"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvAddress"
+        app:layout_constraintBottom_toBottomOf="@id/tvDiclamer"
+        android:layout_marginTop="16dp"
+        app:layout_constraintVertical_bias="0"
+        />
+
+    <TextView
+        android:id="@+id/tvSkip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginRight="64dp"
+        android:text="Preskoči"
+        android:layout_marginBottom="32dp"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        app:layout_constraintRight_toLeftOf="@id/tvNext"
+        />
+
+    <TextView
+        android:id="@+id/tvNext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Da"
+        android:textSize="18dp"
+        android:textColor="@android:color/black"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/tvSkip"
+        android:layout_marginBottom="32dp"
+        android:layout_marginLeft="32dp"
+        android:visibility="invisible"
+        android:textStyle="bold"
+        />
+
+    <Button
+        android:id="@+id/btnRetrySetup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/ic_retry_black_24"
+        app:layout_constraintTop_toTopOf="@id/mapViewSetup"
+        app:layout_constraintBottom_toBottomOf="@id/mapViewSetup"
+        app:layout_constraintRight_toRightOf="@id/mapViewSetup"
+        app:layout_constraintLeft_toLeftOf="@id/mapViewSetup"
+        android:visibility="gone"
+        />
+
+    <TextView
+        android:id="@+id/tvDiclamer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/SETUP_DISCLAMER"
+        app:layout_constraintRight_toRightOf="@id/mapViewSetup"
+        app:layout_constraintLeft_toLeftOf="@id/mapViewSetup"
+        app:layout_constraintTop_toBottomOf="@id/mapViewSetup"
+        android:padding="16dp"
+        />
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

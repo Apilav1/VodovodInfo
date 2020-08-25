@@ -35,8 +35,7 @@ import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 
 @AndroidEntryPoint
-class NoticesFragment : Fragment(R.layout.fragment_notices),
-                    EasyPermissions.PermissionCallbacks {
+class NoticesFragment : Fragment(R.layout.fragment_notices) {
 
     private val viewModel: MainViewModel by viewModels()
 
@@ -46,32 +45,18 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
 
     private var map: GoogleMap? = null
 
-    private var locationPermissionGranted = true
-
-    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-
-    private var lastKnownLocation: Location? = null
-
-    private val defaultLocation = LatLng(-33.8523341, 151.2106085)
-
     private val bounds = LatLngBounds.builder()
 
     private var isSetOneOrMore = false
 
     private var isMapSet = false
 
-    private var isPermissionGranted: Boolean = false
-
     private var isGPRFailed: Boolean = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-//        if(PermissionsUtil.hasLocationPermissions(requireContext())){
-//            isPermissionGranted = true
-//        } else {
-//            requestPermissions()
-//        }
+//
 //
 //        setupRecycleView()
 //
@@ -112,7 +97,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
         mapView.getMapAsync { googleMap ->
             map = googleMap
         }
-        getDeviceLocation()
+//        getDeviceLocation()
     }
 
     private fun mapSetUp() = CoroutineScope(Dispatchers.Default).launch {
@@ -140,7 +125,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
         }
     }
 
-    private suspend fun geoLocate(street: String) = GlobalScope.launch(Dispatchers.IO)     {
+    private suspend fun geoLocate(street: String) = GlobalScope.launch(Dispatchers.IO) {
         val geocoder = Geocoder(requireContext())
         try {
             val result = geocoder.getFromLocationName("Sarajevo $street", 1)
@@ -234,103 +219,6 @@ class NoticesFragment : Fragment(R.layout.fragment_notices),
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 //        mapView?.onSaveInstanceState(outState)
-    }
-
-    private fun requestPermissions() {
-        if(PermissionsUtil.hasLocationPermissions(requireContext())) return
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            EasyPermissions.requestPermissions(
-                this,
-                "You need to accept location permissions to use this app.",
-                REQUEST_CODE_LOCATION_PERMISSION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-        } else {
-            EasyPermissions.requestPermissions(
-                this,
-                "You need to accept location permissions to use this app.",
-                REQUEST_CODE_LOCATION_PERMISSION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            )
-        }
-    }
-
-    override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
-        if(EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
-            AppSettingsDialog.Builder(this).build().show()
-        } else {
-            requestPermissions()
-        }
-    }
-
-    override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
-         isPermissionGranted = true
-         startMap()
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
-    }
-
-    private fun getDeviceLocation() {
-
-//        val request = LocationRequest().apply {
-//            interval = LOCATION_UPDATE_INTERVAL
-//            fastestInterval = FASTEST_LOCATION_INTERVAL
-//            priority = PRIORITY_HIGH_ACCURACY
-//        }
-//        if (ActivityCompat.checkSelfPermission(
-//                requireContext(),
-//                Manifest.permission.ACCESS_FINE_LOCATION
-//            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-//                requireContext(),
-//                Manifest.permission.ACCESS_COARSE_LOCATION
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) {
-//
-//            return
-//        }
-//        fusedLocationProviderClient.requestLocationUpdates(
-//            request,
-//            locationCallback,
-//            Looper.getMainLooper()
-//        )
-        /*
-         * Get the best and most recent location of the device, which may be null in rare
-         * cases when a location is not available.
-         */
-        try {
-            locationPermissionGranted = PermissionsUtil.hasLocationPermissions(requireContext())
-            if (locationPermissionGranted) {
-                val locationResult = fusedLocationProviderClient.lastLocation
-                locationResult.addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        Log.d(TAG, "TASK is success ${task.result?.latitude} ${task.result?.longitude}")
-                        lastKnownLocation = task.result
-                        if (lastKnownLocation != null) {
-                            map?.isMyLocationEnabled = true
-                        }
-                        mapSetUp()
-                    } else {
-                        Log.d(TAG, "Current location is null. Using defaults.")
-                        Log.e(TAG, "Exception: %s", task.exception)
-                        map?.moveCamera(CameraUpdateFactory
-                            .newLatLngZoom(defaultLocation, DEFAULT_ZOOM.toFloat()))
-                        map?.uiSettings?.isMyLocationButtonEnabled = false
-                    }
-                }
-            }
-        } catch (e: SecurityException) {
-            Log.e("Exception: %s", e.message, e)
-        }
     }
 
 //    val locationCallback = object : LocationCallback() {
