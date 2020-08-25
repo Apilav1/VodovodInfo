@@ -90,7 +90,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
         tvNext.setOnClickListener {
             if(it.isVisible) {
                 if(writeToSharedPref()) {
-                    findNavController().navigate(R.id.action_setupFragment_to_noticesFragment)
+                    nextFrag(savedInstanceState)
                 }
             }
         }
@@ -104,10 +104,23 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
         tvSkip.setOnClickListener {
             if(it.isVisible) {
                 if(writeToSharedPref()) {
-                    findNavController().navigate(R.id.action_setupFragment_to_noticesFragment)
+                    nextFrag(savedInstanceState)
                 }
             }
         }
+    }
+
+    private fun nextFrag(savedInstanceState: Bundle?) {
+        val navigationOpt = NavOptions.Builder()
+            .setEnterAnim(R.anim.slide_in)
+            .setExitAnim(R.anim.fade_out)
+            .build()
+
+        findNavController().navigate(
+            R.id.action_setupFragment_to_noticesFragment,
+            savedInstanceState,
+            navigationOpt
+        )
     }
 
     private fun mapSetup() {
@@ -285,6 +298,6 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
     }
 
     companion object {
-        private const val DEFAULT_ZOOM = 16
+        private const val DEFAULT_ZOOM = 17
     }
 }
