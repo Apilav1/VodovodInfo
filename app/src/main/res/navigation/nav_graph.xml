@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/nav_graph"
-    app:startDestination="@id/setupFragment">
+    app:startDestination="@id/settingsFragment">
 
     <fragment
         android:id="@+id/noticesFragment"
@@ -13,6 +13,14 @@
         android:label="SetupFragment" >
         <action
             android:id="@+id/action_setupFragment_to_noticesFragment"
+            app:destination="@id/noticesFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.pilove.vodovodinfo.ui.fragments.SettingsFragment"
+        android:label="SettingsFragment" >
+        <action
+            android:id="@+id/action_settingsFragment_to_noticesFragment"
             app:destination="@id/noticesFragment" />
     </fragment>
 </navigation>

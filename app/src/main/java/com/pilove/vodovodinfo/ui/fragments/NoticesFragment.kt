@@ -1,11 +1,9 @@
 package com.pilove.vodovodinfo.ui.fragments
 
-import android.Manifest
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
-import android.location.Location
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -21,18 +19,23 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MarkerOptions
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.adapters.NoticeAdapter
 import com.pilove.vodovodinfo.data.Notice
-import com.pilove.vodovodinfo.other.Constants.REQUEST_CODE_LOCATION_PERMISSION
+import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
+import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_LAT
+import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_LNG
+import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_STREET_NAME
 import com.pilove.vodovodinfo.ui.viewModels.MainViewModel
-import com.pilove.vodovodinfo.utils.PermissionsUtil
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_notices.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Main
-import pub.devrel.easypermissions.AppSettingsDialog
-import pub.devrel.easypermissions.EasyPermissions
+import javax.inject.Inject
+
+const val ERROR_DIALOG_TAG = "ErrorDialog"
 
 @AndroidEntryPoint
 class NoticesFragment : Fragment(R.layout.fragment_notices) {
@@ -53,33 +56,54 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
 
     private var isGPRFailed: Boolean = false
 
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    @Inject
+    lateinit var sharedPreferences: SharedPreferences
+
+    private lateinit var currentLocationLatLng : LatLng
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-//
-//
-//        setupRecycleView()
-//
-//        //TODO: resumed fragment map redrawing circles problem
-//
-//        viewModel.notices.observe(viewLifecycleOwner, Observer {
-//            it?.let {
-//                notices = it as ArrayList<Notice>
-//                noticeAdapter.submitList(notices!!)
-//                noticeAdapter.notifyDataSetChanged()
-//                viewModel.insertNotices(it)
-//                progress_bar.visibility = View.GONE
-//
-//                if(viewModel.isConnected && isPermissionGranted) {
-//                    startMap()
-//                }
-//            }
-//        })
-//
-//        mapView.onCreate(savedInstanceState)
-//
-//
-//        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        if(savedInstanceState != null) {
+            val errorDialog = parentFragmentManager.findFragmentByTag(
+                ERROR_DIALOG_TAG
+            ) as ErrorDialog?
+            errorDialog?.setYesListener {
+                mapSetup()
+            }
+        }
+
+        setupRecycleView()
+
+        requireActivity().bottomNavigationView?.visibility = View.VISIBLE
+
+        //TODO: resumed fragment map redrawing circles problem
+
+        currentLocationLatLng = LatLng(sharedPreferences
+            .getString(KEY_DEFAULT_LOCATION_LAT, "0.0")!!.toDouble(),
+            sharedPreferences.getString(KEY_DEFAULT_LOCATION_LNG, "0.0")!!.toDouble()
+        )
+
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
+
+        viewModel.notices.observe(viewLifecycleOwner, Observer {
+            it?.let {
+                notices = it as ArrayList<Notice>
+                noticeAdapter.submitList(notices!!)
+                noticeAdapter.notifyDataSetChanged()
+                viewModel.insertNotices(it)
+                pbNotices.visibility = View.GONE
+
+                if(viewModel.isConnected && !isMapSet) {
+                    startMap()
+                }
+            }
+        })
+
+        mapView.onCreate(savedInstanceState)
 
         btnResizeMapDown.setOnClickListener {
             toggleMap()
@@ -87,27 +111,47 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         btnResizeMapUp.setOnClickListener {
             toggleMap()
         }
-        btnRetry.setOnClickListener {
-            mapSetUp()
-            it.visibility = View.GONE
-        }
     }
 
     private fun startMap() {
+        pbMapNotices.visibility = View.VISIBLE
         mapView.getMapAsync { googleMap ->
             map = googleMap
+            mapSetup()
         }
-//        getDeviceLocation()
     }
 
-    private fun mapSetUp() = CoroutineScope(Dispatchers.Default).launch {
+    private fun mapSetup() = CoroutineScope(Dispatchers.Default).launch {
+
+        if(currentLocationLatLng.latitude != 0.0) {
+            withContext(Main) {
+                map?.apply {
+                    val defaultLocation = LatLng(
+                        currentLocationLatLng.latitude,
+                        currentLocationLatLng.longitude
+                    )
+                    val defaultStreet =
+                        sharedPreferences.getString(KEY_DEFAULT_LOCATION_STREET_NAME, "")
+                    addMarker(
+                        MarkerOptions()
+                            .position(defaultLocation)
+                            .title(defaultStreet)
+                    )
+                }
+            }
+        }
 
         withTimeout(6000L) {
             delay(2000L)
             notices?.forEach { notice ->
                 notice.streets.forEach { street ->
-                    if(!isGPRFailed)
-                        geoLocate(street)
+                    if(!isGPRFailed) {
+                        val job = geoLocate(street)
+                        if (job.isCancelled) {
+                            showErrorDialog()
+                            return@withTimeout
+                        }
+                    }
                 }
             }
         }
@@ -117,15 +161,9 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
             if (isSetOneOrMore)
                 zoomToSeeWholeTrack()
         }
-
-        isMapSet = true
-
-        if(isGPRFailed) {
-            btnRetry.visibility = View.VISIBLE
-        }
     }
 
-    private suspend fun geoLocate(street: String) = GlobalScope.launch(Dispatchers.IO) {
+    private suspend fun geoLocate(street: String) : Job = GlobalScope.launch(Dispatchers.IO) {
         val geocoder = Geocoder(requireContext())
         try {
             val result = geocoder.getFromLocationName("Sarajevo $street", 1)
@@ -140,9 +178,21 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
             }
         } catch (e: Exception) {
             Log.d(TAG, "geoLocate error: ${e.message}")
-            if(e.message.equals("grpc failed"))
+
+            this.cancel("Error", e)
+
+            if(e.message.equals("grpc failed")) {
                 isGPRFailed = true
+            }
         }
+    }
+
+    private fun showErrorDialog() {
+        ErrorDialog().apply {
+            setYesListener {
+                mapSetup()
+            }
+        }.show(parentFragmentManager, ERROR_DIALOG_TAG)
     }
 
     private fun drawCircle(point: LatLng) {
@@ -158,6 +208,8 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
     }
 
     private fun zoomToSeeWholeTrack() {
+
+        pbMapNotices.visibility = View.GONE
 
         map?.moveCamera(
             CameraUpdateFactory.newLatLngBounds(
@@ -198,37 +250,35 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
 
     override fun onResume() {
         super.onResume()
-//        mapView?.onResume()
+        mapView?.onResume()
     }
 
     override fun onStart() {
         super.onStart()
-//        mapView?.onStart()
+        mapView?.onStart()
     }
 
     override fun onStop() {
         super.onStop()
-//        mapView?.onStop()
+        mapView?.onStop()
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
-//        mapView?.onLowMemory()
+        mapView?.onLowMemory()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-//        mapView?.onSaveInstanceState(outState)
+        outState.putBoolean("isMapSet", true)
+        mapView?.onSaveInstanceState(outState)
     }
 
-//    val locationCallback = object : LocationCallback() {
-//        override fun onLocationResult(result: LocationResult?) {
-//            super.onLocationResult(result)
-//                result?.locations?.let { locations ->
-//                    Log.d(TAG, "locaije: "+locations.toString())
-//                }
-//        }
-//    }
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+        isMapSet = savedInstanceState?.getBoolean("isMapSet", false) ?: false
+        Log.d(DEBUG_TAG, "VIEW RESTORED isMapSet is $isMapSet")
+    }
 
     companion object {
         private const val DEFAULT_ZOOM = 13

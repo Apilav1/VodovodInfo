@@ -3,4 +3,20 @@
     <string name="PERMISSION_REQUEST_TEXT">Dozvolite rad aplikacije</string>
     <string name="ERROR_TEXT">Desila se greška, molimo pokušajte opet</string>
     <string name="SETUP_DISCLAMER">Napomena: U slučaju da je ovo vaša trenutna lokacija, vašu stalnu adresu življenja možete postaviti naknadno u postavkama aplikacije</string>
+    <string name="setting">Postavke</string>
+    <string name="notices">Obavještenja</string>
+    <string name="ERROR_DIALOG_TITLE">Dogodila se greška</string>
+    <string name="ERROR_DIALOG_MESSAGE">Molimo pokušajte opet! Lokaciju uvijek možete promijeniti naknadno u postavkama</string>
+    <string name="ERROR_DIALOG_YES">Da, pokušaj opet</string>
+    <string name="ERROR_DIALOG_NO">Ne</string>
+    <string name="SETTINGS_TITLE">Postavke</string>
+    <string name="SETTINGS_OPTIONS_ONE_CHANGE_DEFAULT_LOCATION">Postavi ponovo svoju lokaciju</string>
+    <string name="SETTINGS_OPTION_ONE_OK_BUTTON_TEXT">Spremi promjenu</string>
+    <string name="SETTINGS_OPTION_TWO_NOTIFICATION_SETTINGS">Postavke notifikacija</string>
+    <string name="SETTINGS_OPTION_TWO_NOTIFICATION_OPTION_1">Želim primati notifikacije za moju adresu</string>
+    <string name="SETTINGS_OPTION_TWO_NOTIFICATION_OPTION_2">Želim primati sve notifikacije</string>
+    <string name="SETTINGS_OPTION_TWO_NOTIFICATION_OPTION_3">Ne želim primati notifikacije</string>
+    <string name="SETTINGS_OPTION_THREE_TEXT">Promjeni font slova</string>
+    <string name="SETTINGS_SAVE_BUTTON_TEXT">Spremi izmjene</string>
+    <string name="SETTING_EXAMPLE_TEXT">Primjer teksta</string>
 </resources>

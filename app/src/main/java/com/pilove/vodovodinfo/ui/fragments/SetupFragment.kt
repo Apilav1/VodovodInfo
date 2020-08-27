@@ -28,11 +28,10 @@ import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_STREET_NAME
 import com.pilove.vodovodinfo.other.Constants.KEY_IS_FIRST_TIME
 import com.pilove.vodovodinfo.utils.PermissionsUtil
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_location_setup.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.Main
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import javax.inject.Inject
@@ -62,16 +61,14 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if(PermissionsUtil.hasLocationPermissions(requireContext())){
-            isPermissionGranted = true
-            mapSetup()
-        } else {
-            requestPermissions()
+        if(savedInstanceState != null) {
+            val errorDialog = parentFragmentManager.findFragmentByTag(
+                ERROR_DIALOG_TAG
+            ) as ErrorDialog?
+            errorDialog?.setYesListener {
+                mapSetup()
+            }
         }
-
-        mapViewSetup.onCreate(savedInstanceState)
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
-
 
         if(!isFirstAppTime) {
             val navigationOpt = NavOptions.Builder()
@@ -83,21 +80,26 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
                 savedInstanceState,
                 navigationOpt
             )
+        } else {
+            mapViewSetup.onCreate(savedInstanceState)
+
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
+
+            if(PermissionsUtil.hasLocationPermissions(requireContext())){
+                isPermissionGranted = true
+                mapSetup()
+            } else {
+                requestPermissions()
+            }
         }
 
-        mapSetup()
+
 
         tvNext.setOnClickListener {
             if(it.isVisible) {
                 if(writeToSharedPref()) {
                     nextFrag(savedInstanceState)
                 }
-            }
-        }
-
-        btnRetrySetup.setOnClickListener {
-            if(it.isVisible) {
-                geoLocate()
             }
         }
 
@@ -123,10 +125,14 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
         )
     }
 
-    private fun mapSetup() {
-        mapViewSetup?.getMapAsync { googleMap ->
-            map = googleMap
-            getDeviceLocation()
+    private fun mapSetup() = CoroutineScope(Dispatchers.Default).launch {
+//        pbMapNoticesSetup.visibility = View.VISIBLE
+        delay(2000L)
+        withContext(Main) {
+            mapViewSetup?.getMapAsync { googleMap ->
+                map = googleMap
+                getDeviceLocation()
+            }
         }
     }
 
@@ -246,17 +252,30 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
                 val locationResult = fusedLocationProviderClient.lastLocation
                 locationResult.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
+
+                        if(task == null ||
+                            (task.result?.latitude == defaultLocation.latitude &&
+                                    task.result?.longitude == defaultLocation.longitude)) {
+                            showErrorDialog()
+                            return@addOnCompleteListener
+                        }
                         Log.d(
                             DEBUG_TAG,
-                            "TASK is success ${task.result?.latitude} ${task.result?.longitude}")
+                            "TASK is success ${task.result?.latitude} " +
+                                    "${task.result?.longitude}")
                         lastKnownLocation = task.result
-                        if (lastKnownLocation != null) {
+
+                        if(lastKnownLocation != null || lastKnownLocation?.latitude != null) {
                             map?.isMyLocationEnabled = true
+                            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                                LatLng(lastKnownLocation!!.latitude,
+                                    lastKnownLocation!!.longitude), DEFAULT_ZOOM.toFloat()))
+
+                            geoLocate()
                         }
-                        map?.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                            LatLng(lastKnownLocation!!.latitude,
-                                lastKnownLocation!!.longitude), DEFAULT_ZOOM.toFloat()))
-                        geoLocate()
+                        else {
+                            showErrorDialog()
+                        }
 
                     } else {
                         Log.d(DEBUG_TAG, "Current location is null. Using defaults.")
@@ -282,19 +301,26 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
                                                     lastKnownLocation!!.longitude, 1)
             val address : Address = result[0]
             if (result.isNotEmpty()) {
-                withContext(Dispatchers.Main) {
+                withContext(Main) {
                     tvAddress.text = address.featureName
                     tvNext.visibility = View.VISIBLE
                 }
             }
+            pbMapNoticesSetup.visibility = View.GONE
         } catch (e: Exception) {
             Log.d(DEBUG_TAG, "geoLocate error: ${e.message}")
-            if(e.message.equals("grpc failed")) {
-                Toast.makeText(requireContext(), getText(R.string.ERROR_TEXT),
-                    Toast.LENGTH_LONG).show()
-                btnRetrySetup.visibility = View.VISIBLE
+            withContext(Main) {
+                showErrorDialog()
             }
         }
+    }
+
+    private fun showErrorDialog() {
+        ErrorDialog().apply {
+            setYesListener {
+                mapSetup()
+            }
+        }.show(parentFragmentManager, ERROR_DIALOG_TAG)
     }
 
     companion object {

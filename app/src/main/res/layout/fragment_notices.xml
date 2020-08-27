@@ -8,7 +8,7 @@
     android:theme="@style/Theme.AppCompat.Light">
 
     <ProgressBar
-        android:id="@+id/progress_bar"
+        android:id="@+id/pbNotices"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
@@ -104,17 +104,17 @@
         android:visibility="gone"
         />
 
-    <Button
-        android:id="@+id/btnRetry"
+    <ProgressBar
+        android:id="@+id/pbMapNotices"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/ic_retry"
-        app:layout_constraintBottom_toBottomOf="@id/mapView"
-        app:layout_constraintLeft_toLeftOf="@id/mapView"
         app:layout_constraintTop_toTopOf="@id/mapView"
         app:layout_constraintRight_toRightOf="@id/mapView"
+        app:layout_constraintLeft_toLeftOf="@id/mapView"
+        app:layout_constraintBottom_toBottomOf="@id/mapView"
         android:visibility="gone"
         />
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
