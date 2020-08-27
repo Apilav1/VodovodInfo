@@ -246,7 +246,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/expandableSecondOptionLayout"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/btnSave"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintVertical_bias="0.2"
@@ -326,7 +326,7 @@
         android:layout_margin="20dp"
         android:text="@string/SETTINGS_SAVE_BUTTON_TEXT"
         android:padding="8dp"
-        android:visibility="gone"
+        android:visibility="visible"
         />
 
 

@@ -1,21 +1,21 @@
 package com.pilove.vodovodinfo.ui.fragments
 
 import android.content.SharedPreferences
-import android.location.Location
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
-import android.widget.RadioButton
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.navigation.NavOptions
+import androidx.navigation.fragment.findNavController
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.LatLng
 import com.pilove.vodovodinfo.R
-import kotlinx.android.synthetic.main.fragment_location_setup.*
+import com.pilove.vodovodinfo.other.Constants.NOTIFICATIONS_ALL
+import com.pilove.vodovodinfo.other.Constants.KEY_NOTIFICATIONS_MODE
+import com.pilove.vodovodinfo.other.Constants.KEY_NOTIFICATIONS_TEXT_SIZE
+import com.pilove.vodovodinfo.other.Constants.NOTIFICATIONS_ONLY_MY_STREET
+import com.pilove.vodovodinfo.other.Constants.NO_NOTIFICATIONS_MODE
 import kotlinx.android.synthetic.main.fragment_settings.*
 import javax.inject.Inject
 
@@ -23,6 +23,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     @Inject
     lateinit var sharedPreferences: SharedPreferences
+
+    private var notificationMode = 0
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -66,6 +68,18 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         btnSave.setOnClickListener {
             if(it.isVisible) {
+                if(writeToSharedPref()) {
+                    val navigationOpt = NavOptions.Builder()
+                        .setEnterAnim(R.anim.slide_in)
+                        .setExitAnim(R.anim.fade_out)
+                        .build()
+
+                    findNavController().navigate(
+                        R.id.action_settingsFragment_to_noticesFragment,
+                        savedInstanceState,
+                        navigationOpt
+                    )
+                }
             }
         }
 
@@ -73,11 +87,27 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             btnSave.visibility = View.VISIBLE
             when(checkedId) {
                 R.id.firstRB -> {
-
+                    notificationMode = NOTIFICATIONS_ONLY_MY_STREET
+                }
+                R.id.secondRB -> {
+                    notificationMode = NOTIFICATIONS_ALL
+                }
+                R.id.thirdRB -> {
+                    notificationMode = NO_NOTIFICATIONS_MODE
                 }
             }
         }
 
+    }
+
+    private fun writeToSharedPref(): Boolean {
+
+        sharedPreferences.edit()
+            .putInt(KEY_NOTIFICATIONS_MODE, notificationMode)
+            .putFloat(KEY_NOTIFICATIONS_TEXT_SIZE, tvExampleText.textSize)
+            .apply()
+
+        return true
     }
 
 }

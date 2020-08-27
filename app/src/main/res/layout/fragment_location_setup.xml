@@ -72,7 +72,7 @@
         android:id="@+id/tvNext"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Da"
+        android:text="@string/TRYAGAIN"
         android:textSize="18dp"
         android:textColor="@android:color/black"
         app:layout_constraintRight_toRightOf="parent"

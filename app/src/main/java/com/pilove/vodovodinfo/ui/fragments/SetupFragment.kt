@@ -109,8 +109,13 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
         tvNext.setOnClickListener {
             if(it.isVisible && !isHostedByFragment) {
-                if(writeToSharedPref()) {
-                    nextFrag(savedInstanceState)
+                if(tvNext.text == getText(R.string.YES)) {
+                    if(writeToSharedPref()) {
+                        nextFrag(savedInstanceState)
+                    }
+                } else if(tvNext.text == getText(R.string.TRYAGAIN)){
+                    //retry again
+                    geoLocate(true)
                 }
             } else if(it.isVisible){
                 writeToSharedPref()
