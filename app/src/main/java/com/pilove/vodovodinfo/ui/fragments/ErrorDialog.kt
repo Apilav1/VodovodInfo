@@ -1,5 +1,6 @@
 package com.pilove.vodovodinfo.ui.fragments
 
+import android.app.AlertDialog
 import android.app.Dialog
 import android.os.Bundle
 import androidx.fragment.app.DialogFragment
@@ -15,7 +16,7 @@ class ErrorDialog : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return MaterialAlertDialogBuilder(requireContext())
+        return AlertDialog.Builder(requireContext())
             .setTitle(getText(R.string.ERROR_DIALOG_TITLE))
             .setMessage(R.string.ERROR_DIALOG_MESSAGE)
             .setIcon(R.drawable.ic_baseline_error_outline_24)

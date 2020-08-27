@@ -1,6 +1,7 @@
 package com.pilove.vodovodinfo.ui.fragments
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.SharedPreferences
 import android.location.Address
 import android.location.Geocoder
@@ -9,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -19,6 +21,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.other.Constants
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
@@ -28,7 +31,6 @@ import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_STREET_NAME
 import com.pilove.vodovodinfo.other.Constants.KEY_IS_FIRST_TIME
 import com.pilove.vodovodinfo.utils.PermissionsUtil
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_location_setup.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Main
@@ -58,6 +60,8 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
     private var map: GoogleMap? = null
 
+    private var isHostedByFragment = false
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -68,6 +72,16 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
             errorDialog?.setYesListener {
                 mapSetup()
             }
+        }
+
+        if(requireParentFragment() is SettingsFragment) {
+            isHostedByFragment = true
+            tvSkip.text = getText(R.string.TRYAGAIN)
+            tvNext.text = getText(R.string.SETTINGS_SAVE_BUTTON_TEXT)
+            tvNext.visibility = View.GONE
+            tvSkip.visibility = View.GONE
+            tvDiclamer.text = ""
+            pbMapNoticesSetup.visibility = View.VISIBLE
         }
 
         if(!isFirstAppTime) {
@@ -93,21 +107,27 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
             }
         }
 
-
-
         tvNext.setOnClickListener {
-            if(it.isVisible) {
+            if(it.isVisible && !isHostedByFragment) {
                 if(writeToSharedPref()) {
                     nextFrag(savedInstanceState)
                 }
+            } else if(it.isVisible){
+                writeToSharedPref()
+
+                Toast.makeText(requireContext(),
+                        getText(R.string.CHANGES_SAVED), Toast.LENGTH_LONG).show()
             }
         }
 
         tvSkip.setOnClickListener {
-            if(it.isVisible) {
+            if(it.isVisible && !isHostedByFragment) {
                 if(writeToSharedPref()) {
                     nextFrag(savedInstanceState)
                 }
+            } else if(it.isVisible) {
+                //retry again
+                geoLocate(true)
             }
         }
     }
@@ -247,6 +267,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
          * Get the best and most recent location of the device, which may be null in rare
          * cases when a location is not available.
          */
+        pbMapNoticesSetup.visibility = View.VISIBLE
         try {
             if (isPermissionGranted) {
                 val locationResult = fusedLocationProviderClient.lastLocation
@@ -271,6 +292,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
                                 LatLng(lastKnownLocation!!.latitude,
                                     lastKnownLocation!!.longitude), DEFAULT_ZOOM.toFloat()))
 
+
                             geoLocate()
                         }
                         else {
@@ -292,25 +314,56 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
         }
     }
 
-    private fun geoLocate() = GlobalScope.launch(Dispatchers.IO) {
+    private fun geoLocate(tryAgain: Boolean = false) = GlobalScope.launch(Main) {
         if(lastKnownLocation == null || lastKnownLocation?.latitude == null) return@launch
 
         val geocoder = Geocoder(requireContext())
         try {
             val result = geocoder.getFromLocation(lastKnownLocation!!.latitude,
                                                     lastKnownLocation!!.longitude, 1)
-            val address : Address = result[0]
-            if (result.isNotEmpty()) {
+            if(tryAgain) {
+                //radius search
+                val lat = lastKnownLocation!!.latitude
+                val long = lastKnownLocation!!.longitude
+                var boundaries = listOf<LatLng>(
+                    LatLng(lat + 0.001, long),
+                    LatLng(lat, long + 0.001),
+                    LatLng(lat + 0.001, long + 0.001),
+                    LatLng(lat + 0.001, long - 0.001),
+                    LatLng(lat - 0.001, long + 0.001),
+                    LatLng(lat - 0.001, long - 0.001),
+                    LatLng(lat - 0.001, long),
+                    LatLng(lat, long - 0.001)
+                )
+
+                boundaries.forEach {
+                    result += geocoder.getFromLocation(it.latitude, it.longitude, 1)
+                }
+            }
+
+            if(result.isNotEmpty() && result?.size == 1)
+            {
+                val address : Address = result[0]
                 withContext(Main) {
                     tvAddress.text = address.featureName
                     tvNext.visibility = View.VISIBLE
+                    tvSkip.visibility = View.VISIBLE
                 }
+                Toast.makeText(requireContext(),
+                    getText(R.string.TOAST_TRY_AGAIN_TEXT), Toast.LENGTH_LONG).show()
+                pbMapNoticesSetup.visibility = View.GONE
             }
-            pbMapNoticesSetup.visibility = View.GONE
+            else if(result.isNotEmpty() && result?.size!! > 1){
+                result.forEach {
+                    Log.d(DEBUG_TAG, it.toString())
+                }
+                showAlertDialog(result)
+            }
         } catch (e: Exception) {
             Log.d(DEBUG_TAG, "geoLocate error: ${e.message}")
             withContext(Main) {
                 showErrorDialog()
+                pbMapNoticesSetup.visibility = View.VISIBLE
             }
         }
     }
@@ -321,6 +374,41 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
                 mapSetup()
             }
         }.show(parentFragmentManager, ERROR_DIALOG_TAG)
+    }
+
+    private fun showAlertDialog(list: MutableList<Address>) {
+        AlertDialog.Builder(requireContext()).apply {
+            setTitle(R.string.ALERT_DIALOG_MULTIPLE_PLACES_TITLE)
+
+            val arrayAdapter = ArrayAdapter<String>(requireContext(),
+                                                    android.R.layout.select_dialog_singlechoice)
+
+            var result = list.distinctBy { it.featureName }
+            //eliminate numbers from list
+            result = result.filter { !it.featureName.matches("-?\\d+(\\.\\d+)?".toRegex()) }
+
+            result.forEach {
+                arrayAdapter.add(it.featureName)
+            }
+
+            setNegativeButton(getText(R.string.CANCEL)) { dialog, _ ->
+                pbMapNoticesSetup.visibility = View.GONE
+                dialog.dismiss()
+            }
+
+            setPositiveButton(getText(R.string.TRYAGAIN)) { dialog, _ ->
+                tvNext.visibility = View.GONE
+                geoLocate(true)
+                pbMapNoticesSetup.visibility = View.GONE
+                dialog.dismiss()
+            }
+
+            setAdapter(arrayAdapter) { _, which ->
+                tvAddress.text = arrayAdapter.getItem(which)
+                if(isHostedByFragment) tvNext.visibility = View.VISIBLE
+            }
+            show()
+        }
     }
 
     companion object {

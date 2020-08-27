@@ -6,7 +6,7 @@
     <string name="setting">Postavke</string>
     <string name="notices">Obavještenja</string>
     <string name="ERROR_DIALOG_TITLE">Dogodila se greška</string>
-    <string name="ERROR_DIALOG_MESSAGE">Molimo pokušajte opet! Lokaciju uvijek možete promijeniti naknadno u postavkama</string>
+    <string name="ERROR_DIALOG_MESSAGE">Molimo pokušajte opet! Lokaciju uvijek možete naknadno promjeniti</string>
     <string name="ERROR_DIALOG_YES">Da, pokušaj opet</string>
     <string name="ERROR_DIALOG_NO">Ne</string>
     <string name="SETTINGS_TITLE">Postavke</string>
@@ -19,4 +19,11 @@
     <string name="SETTINGS_OPTION_THREE_TEXT">Promjeni font slova</string>
     <string name="SETTINGS_SAVE_BUTTON_TEXT">Spremi izmjene</string>
     <string name="SETTING_EXAMPLE_TEXT">Primjer teksta</string>
+
+    <string name="ALERT_DIALOG_MULTIPLE_PLACES_TITLE">Izaberite vašu lokaciju</string>
+
+    <string name="CANCEL">Nazad</string>
+    <string name="TRYAGAIN">Pokušaj opet</string>
+    <string name="TOAST_TRY_AGAIN_TEXT">Ako ovo nije vaša adresa pokušajte opet</string>
+    <string name="CHANGES_SAVED">Izmjene spašene</string>
 </resources>

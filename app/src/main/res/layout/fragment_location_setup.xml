@@ -88,11 +88,12 @@
         android:id="@+id/tvDiclamer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/SETUP_DISCLAMER"
-        app:layout_constraintRight_toRightOf="@id/mapViewSetup"
-        app:layout_constraintLeft_toLeftOf="@id/mapViewSetup"
-        app:layout_constraintTop_toBottomOf="@id/mapViewSetup"
         android:padding="16dp"
+        android:text="@string/SETUP_DISCLAMER"
+        app:layout_constraintBottom_toTopOf="@+id/tvSkip"
+        app:layout_constraintLeft_toLeftOf="@id/mapViewSetup"
+        app:layout_constraintRight_toRightOf="@id/mapViewSetup"
+        app:layout_constraintTop_toBottomOf="@id/mapViewSetup"
         />
 
 
