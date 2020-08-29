@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.preference.PreferenceManager
 import com.pilove.vodovodinfo.BaseApplication
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.other.Constants.DEFAULT_VALUE_FOR_NOTICE_TITLE
@@ -48,9 +49,9 @@ class NoticeServer @Inject constructor() {
 
     fun getNotices(context: Context): LiveData<List<Notice>> {
 
-        sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
-       val result = MutableLiveData<List<Notice>>()
+        val result = MutableLiveData<List<Notice>>()
 
         errorHappened = false
 

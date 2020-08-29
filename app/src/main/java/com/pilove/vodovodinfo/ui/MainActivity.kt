@@ -12,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.ui.setupWithNavController
 import androidx.work.*
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.maps.model.LatLng
@@ -24,6 +26,7 @@ import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.networks.ConnectionLiveData
+import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.repositories.MainRepository
 import com.pilove.vodovodinfo.ui.viewModels.MainViewModel
 import com.pilove.vodovodinfo.utils.recognizeStreets
@@ -47,6 +50,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        bottomNavigationView.setupWithNavController(navHostFragment.findNavController())
 
         ConnectionLiveData(this).observe(this, Observer { isConnected ->
             if(!isConnected) {

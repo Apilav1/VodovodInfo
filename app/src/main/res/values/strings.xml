@@ -6,7 +6,7 @@
     <string name="setting">Postavke</string>
     <string name="notices">Obavještenja</string>
     <string name="ERROR_DIALOG_TITLE">Dogodila se greška</string>
-    <string name="ERROR_DIALOG_MESSAGE">Molimo pokušajte opet! Lokaciju uvijek možete naknadno promjeniti</string>
+    <string name="ERROR_DIALOG_MESSAGE">Molimo pokušajte opet sa upaljenim GPS servisom na vašem mobitelu! Lokaciju uvijek možete naknadno promjeniti</string>
     <string name="ERROR_DIALOG_YES">Da, pokušaj opet</string>
     <string name="ERROR_DIALOG_NO">Ne</string>
     <string name="SETTINGS_TITLE">Postavke</string>

@@ -14,6 +14,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat.getSystemService
+import androidx.preference.PreferenceManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.pilove.vodovodinfo.R
@@ -56,9 +57,7 @@ class NewNoticeWorker constructor(
 
         setNotificationConfig()
 
-        sharedPreferences = applicationContext
-                              .getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
-
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
         latestNoticeId = sharedPreferences.getInt(KEY_LATEST_NOTICE_ID, 2600)
 

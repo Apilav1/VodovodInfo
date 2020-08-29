@@ -83,7 +83,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             }
         }
 
-        radioGroup.setOnCheckedChangeListener { group, checkedId ->
+        radioGroup.setOnCheckedChangeListener { _ , checkedId ->
             btnSave.visibility = View.VISIBLE
             when(checkedId) {
                 R.id.firstRB -> {

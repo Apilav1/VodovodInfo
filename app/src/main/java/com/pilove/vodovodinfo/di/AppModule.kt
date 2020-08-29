@@ -3,6 +3,7 @@ package com.pilove.vodovodinfo.di
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import androidx.preference.PreferenceManager
 import androidx.room.Room
 import com.pilove.vodovodinfo.other.Constants.NOTICE_DATABASE_NAME
 import com.pilove.vodovodinfo.data.NoticeDatabase
@@ -38,8 +39,8 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideSharedPreferences(@ApplicationContext app: Context) =
-        app.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
+    fun provideSharedPreferences(@ApplicationContext app: Context): SharedPreferences =
+        PreferenceManager.getDefaultSharedPreferences(app)
 
     @Singleton
     @Provides

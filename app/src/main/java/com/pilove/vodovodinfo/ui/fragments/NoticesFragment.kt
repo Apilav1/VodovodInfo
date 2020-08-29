@@ -11,6 +11,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.transition.AutoTransition
@@ -87,16 +88,20 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         requireActivity().bottomNavigationView?.visibility = View.VISIBLE
 
         //TODO: resumed fragment map redrawing circles problem
-        //TODO: get all related notices
         //TODO: fix notifications 2600
         //TODO: fix all warnings
-
-        zoomToDefaultLocation()
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
         viewModel.notices.observe(viewLifecycleOwner, Observer {
             it?.let {
+
+                val maxIdOldNotices = noticeAdapter.items.maxByOrNull { n -> n.id }
+                val maxIdNewNotice = it.maxByOrNull { n -> n.id }
+
+                if(maxIdOldNotices?.id != null && maxIdNewNotice?.id != null &&
+                    maxIdOldNotices.id >= maxIdNewNotice.id) return@Observer
+
                 notices = it as ArrayList<Notice>
                 noticeAdapter.submitList(notices!!)
                 noticeAdapter.notifyDataSetChanged()
@@ -129,6 +134,8 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
                     DEFAULT_ZOOM.toFloat()
                 )
             )
+        } else {
+            Log.d(DEBUG_TAG, "PRAZAN LOCATION")
         }
     }
 
@@ -136,6 +143,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         pbMapNotices.visibility = View.VISIBLE
         mapView.getMapAsync { googleMap ->
             map = googleMap
+            zoomToDefaultLocation()
             mapSetup()
         }
     }
@@ -176,50 +184,6 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         }
     }
 
-//    private fun mapSetup() = CoroutineScope(Dispatchers.Default).launch {
-//
-//        if(currentLocationLatLng.latitude != 0.0) {
-//            withContext(Main) {
-//                map?.apply {
-//                    val defaultLocation = LatLng(
-//                        currentLocationLatLng.latitude,
-//                        currentLocationLatLng.longitude
-//                    )
-//                    val defaultStreet =
-//                        sharedPreferences.getString(KEY_DEFAULT_LOCATION_STREET_NAME, "")
-//                    addMarker(
-//                        MarkerOptions()
-//                            .position(defaultLocation)
-//                            .title(defaultStreet)
-//                    )
-//                }
-//            }
-//        }
-//
-//        withTimeout(6000L) {
-//            delay(2000L)
-//            notices?.forEach { notice ->
-//                notice.streets.forEach { street ->
-//                    if(!isGPRFailed) {
-//                        val job = geoLocate(street)
-//                        if (job.isCancelled) {
-//                            showErrorDialog()
-//                            return@withTimeout
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        delay(2000L)
-//        withContext(Main) {
-//            if (isSetOneOrMore)
-//                zoomToSeeWholeTrack()
-//        }
-//
-//        isMapSet = true
-//    }
-
     private suspend fun geoLocate(street: String) = GlobalScope.launch(Dispatchers.IO) {
 
         if(!isActive) return@launch
@@ -235,10 +199,9 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
                 isSetOneOrMore = true
                 withContext(Main) {
                     drawCircle(latLng)
+                    zoomToSeeWholeTrack()
                 }
-            } else {
-                return@launch
-            }
+              }
         } catch (e: Exception) {
             Log.d(TAG, "geoLocate error: ${e.message}")
 

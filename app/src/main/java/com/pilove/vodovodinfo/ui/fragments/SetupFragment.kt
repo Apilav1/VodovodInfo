@@ -76,8 +76,6 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
         if(requireParentFragment() is SettingsFragment) {
             isHostedByFragment = true
-            tvSkip.text = getText(R.string.TRYAGAIN)
-            tvNext.text = getText(R.string.SETTINGS_SAVE_BUTTON_TEXT)
             tvNext.visibility = View.GONE
             tvSkip.visibility = View.GONE
             tvDiclamer.text = ""
@@ -109,14 +107,11 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
         tvNext.setOnClickListener {
             if(it.isVisible && !isHostedByFragment) {
-                if(tvNext.text == getText(R.string.YES)) {
-                    if(writeToSharedPref()) {
-                        nextFrag(savedInstanceState)
-                    }
-                } else if(tvNext.text == getText(R.string.TRYAGAIN)){
-                    //retry again
-                    geoLocate(true)
+
+                if (writeToSharedPref()) {
+                    nextFrag(savedInstanceState)
                 }
+
             } else if(it.isVisible){
                 writeToSharedPref()
 
@@ -127,11 +122,13 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
         tvSkip.setOnClickListener {
             if(it.isVisible && !isHostedByFragment) {
-
                 nextFrag(savedInstanceState)
+            }
+        }
 
-            } else if(it.isVisible) {
-                //retry again
+        tvTryAgain.setOnClickListener {
+            //retry again
+            if(it.isVisible) {
                 geoLocate(true)
             }
         }
@@ -139,22 +136,35 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
     @SuppressLint("MissingPermission")
     private fun setFusedLocationListener() {
+        var isReceived = false
+
+        GlobalScope.launch {
+            delay(5000L)
+            if(!isReceived) {
+                showErrorDialog()
+            }
+        }
+
         fusedLocationProviderClient!!.lastLocation
             .addOnSuccessListener {
                     location ->
                 if (location == null || location.accuracy > 100) {
                    val mLocationCallback = object : LocationCallback() {
                         override fun onLocationResult(locationResult: LocationResult?) {
-                            Log.d(DEBUG_TAG, "receved loc 150")
+                            isReceived = true
 
+                            if(locationResult != null
+                                && locationResult.lastLocation.accuracy < 100) {
 
-                            if (locationResult != null && locationResult.locations.isNotEmpty()) {
-                                lastKnownLocation = locationResult.locations[0]
-                                moveCamera()
-                                geoLocate()
-                            } else {
-                                Log.d(DEBUG_TAG, "ERRRORRR 155")
-                                showErrorDialog()
+                                if (locationResult.locations.isNotEmpty()
+                                ) {
+                                    lastKnownLocation = locationResult.locations[0]
+                                    moveCamera()
+                                    geoLocate()
+                                } else {
+                                    Log.d(DEBUG_TAG, "error while locating")
+                                    showErrorDialog()
+                                }
                             }
                         }
                     }
@@ -163,8 +173,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
                     currentLocationRequest.setInterval(500)
                         .setFastestInterval(0)
                         .setMaxWaitTime(0)
-                        .setSmallestDisplacement(0F)
-                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                        .setSmallestDisplacement(0F).priority = PRIORITY_HIGH_ACCURACY
                     fusedLocationProviderClient!!.requestLocationUpdates(currentLocationRequest,
                         mLocationCallback, null)
                 } else {
@@ -334,6 +343,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
     @SuppressLint("MissingPermission")
     private fun moveCamera() {
+
         map?.isMyLocationEnabled = true
         map?.moveCamera(
             CameraUpdateFactory.newLatLngZoom(
@@ -376,9 +386,10 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
             {
                 val address : Address = result[0]
                 withContext(Main) {
+                    tvAddress.visibility = View.VISIBLE
                     tvAddress.text = address.featureName
                     tvNext.visibility = View.VISIBLE
-                    tvSkip.visibility = View.VISIBLE
+                    tvTryAgain.visibility = View.VISIBLE
                 }
                 Toast.makeText(requireContext(),
                     getText(R.string.TOAST_TRY_AGAIN_TEXT), Toast.LENGTH_LONG).show()
@@ -436,7 +447,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
             setAdapter(arrayAdapter) { _, which ->
                 tvAddress.text = arrayAdapter.getItem(which)
-                tvNext.text = getText(R.string.YES)
+                tvAddress.visibility = View.VISIBLE
             }
             show()
         }

@@ -5,7 +5,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:theme="@style/Theme.AppCompat.Light">
+    android:theme="@style/Theme.AppCompat.Light"
+    android:id="@+id/noticesFragment"
+    >
 
     <ProgressBar
         android:id="@+id/pbNotices"
@@ -24,10 +26,25 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Obavještenja"
+        style="@style/TextAppearance.AppCompat.Title"
         android:layout_marginTop="12dp"
+        android:layout_marginBottom="4dp"
+        app:layout_constraintBottom_toBottomOf="@id/blackLine"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/blackLine"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@android:color/black"
+        app:layout_constraintBottom_toBottomOf="@id/textView"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvNotices"
@@ -73,14 +90,17 @@
 
     <ImageView
         android:id="@+id/googleMapsLogo"
-        android:layout_width="160dp"
-        android:layout_height="100dp"
-        app:layout_constraintBottom_toBottomOf="@id/vBottomTab"
-        android:background="@drawable/google_maps_icon_300x200"
-        app:layout_constraintTop_toTopOf="@id/vBottomTab"
-        app:layout_constraintLeft_toLeftOf="@id/vBottomTab"
-        android:scaleType="centerInside"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
         android:adjustViewBounds="true"
+        android:background="@drawable/powered_by_google_on_white"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="@id/vBottomTab"
+        app:layout_constraintLeft_toLeftOf="@id/vBottomTab"
+        app:layout_constraintTop_toTopOf="@id/vBottomTab"
+        app:layout_constraintRight_toLeftOf="@id/btnResizeMapUp"
+        app:layout_constraintHorizontal_bias="0"
         />
 
     <Button

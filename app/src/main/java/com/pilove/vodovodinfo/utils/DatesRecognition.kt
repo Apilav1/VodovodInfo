@@ -1,5 +1,6 @@
 package com.pilove.vodovodinfo.utils
 
+import android.annotation.SuppressLint
 import android.util.Log
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import java.lang.Exception
@@ -7,9 +8,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
+@SuppressLint("SimpleDateFormat")
 fun recognizeDates(noticeText: String): ArrayList<Date> {
 
-    var result = ArrayList<Date>(0)
+    val result = ArrayList<Date>(0)
 
     try {
 
@@ -19,15 +21,17 @@ fun recognizeDates(noticeText: String): ArrayList<Date> {
                     val w = if (word.last() == '.') word.removeSuffix(".") else word
                     val date = SimpleDateFormat("dd.MM.yyyy").parse(w)
 
-                    if (!result.contains(date))
+                    if (!result.contains(date!!))
                         result.add(date)
 
                 } catch (e: Exception) {
+                    return result
                 }
             }
         }
     } catch (e: Exception) {
-        Log.d(DEBUG_TAG, "Greska kod datuma")
+        Log.d(DEBUG_TAG, "error to be ignored date: ${e.message}")
+        return result
     }
 
     return result

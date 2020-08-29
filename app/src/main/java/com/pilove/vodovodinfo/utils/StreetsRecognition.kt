@@ -36,5 +36,7 @@ fun recognizeStreets(noticeText: String): ArrayList<String> {
         if(word.contains(".") && !word.contains("ef")) tracking = false
     }
 
+    streets = streets.filter { !it.matches("-?\\d+(\\.\\d+)?".toRegex())  } as ArrayList<String>
+
     return streets
 }
