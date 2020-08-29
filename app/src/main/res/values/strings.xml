@@ -27,4 +27,7 @@
     <string name="TOAST_TRY_AGAIN_TEXT">Ako ovo nije vaša adresa pokušajte opet</string>
     <string name="CHANGES_SAVED">Izmjene spašene</string>
     <string name="YES">Da</string>
+
+    <string name="NOTIFICATION_TITLE">Obavještenje</string>
+
 </resources>

@@ -7,11 +7,14 @@ import android.location.Geocoder
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.transition.AutoTransition
+import androidx.transition.TransitionManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -31,8 +34,10 @@ import com.pilove.vodovodinfo.ui.viewModels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_notices.*
+import kotlinx.android.synthetic.main.fragment_settings.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.NonCancellable.isActive
 import javax.inject.Inject
 
 const val ERROR_DIALOG_TAG = "ErrorDialog"
@@ -63,6 +68,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
 
     private lateinit var currentLocationLatLng : LatLng
 
+    private lateinit var mapJob: Job
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -81,11 +87,11 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         requireActivity().bottomNavigationView?.visibility = View.VISIBLE
 
         //TODO: resumed fragment map redrawing circles problem
+        //TODO: get all related notices
+        //TODO: fix notifications 2600
+        //TODO: fix all warnings
 
-        currentLocationLatLng = LatLng(sharedPreferences
-            .getString(KEY_DEFAULT_LOCATION_LAT, "0.0")!!.toDouble(),
-            sharedPreferences.getString(KEY_DEFAULT_LOCATION_LNG, "0.0")!!.toDouble()
-        )
+        zoomToDefaultLocation()
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
@@ -97,7 +103,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
                 viewModel.insertNotices(it)
                 pbNotices.visibility = View.GONE
 
-                if(viewModel.isConnected && !isMapSet) {
+                if(viewModel.isConnected && !isMapSet && mapView.isVisible) {
                     startMap()
                 }
             }
@@ -105,11 +111,24 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
 
         mapView.onCreate(savedInstanceState)
 
-        btnResizeMapDown.setOnClickListener {
-            toggleMap()
-        }
         btnResizeMapUp.setOnClickListener {
             toggleMap()
+        }
+    }
+
+    private fun zoomToDefaultLocation() {
+        currentLocationLatLng = LatLng(sharedPreferences
+            .getString(KEY_DEFAULT_LOCATION_LAT, "0.0")!!.toDouble(),
+            sharedPreferences.getString(KEY_DEFAULT_LOCATION_LNG, "0.0")!!.toDouble()
+        )
+
+        if(currentLocationLatLng.latitude != 0.0) {
+            map?.moveCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(currentLocationLatLng.latitude, currentLocationLatLng.longitude),
+                    DEFAULT_ZOOM.toFloat()
+                )
+            )
         }
     }
 
@@ -121,49 +140,91 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         }
     }
 
-    private fun mapSetup() = CoroutineScope(Dispatchers.Default).launch {
+    private fun mapSetup() {
 
         if(currentLocationLatLng.latitude != 0.0) {
-            withContext(Main) {
-                map?.apply {
-                    val defaultLocation = LatLng(
-                        currentLocationLatLng.latitude,
-                        currentLocationLatLng.longitude
-                    )
-                    val defaultStreet =
-                        sharedPreferences.getString(KEY_DEFAULT_LOCATION_STREET_NAME, "")
-                    addMarker(
-                        MarkerOptions()
-                            .position(defaultLocation)
-                            .title(defaultStreet)
-                    )
-                }
+            map?.apply {
+                val defaultLocation = LatLng(
+                    currentLocationLatLng.latitude,
+                    currentLocationLatLng.longitude
+                )
+                val defaultStreet =
+                    sharedPreferences.getString(KEY_DEFAULT_LOCATION_STREET_NAME, "")
+                addMarker(
+                    MarkerOptions()
+                        .position(defaultLocation)
+                        .title(defaultStreet)
+                )
             }
         }
 
-        withTimeout(6000L) {
-            delay(2000L)
+        mapJob = GlobalScope.launch {
             notices?.forEach { notice ->
                 notice.streets.forEach { street ->
                     if(!isGPRFailed) {
                         val job = geoLocate(street)
                         if (job.isCancelled) {
                             showErrorDialog()
-                            return@withTimeout
                         }
                     }
                 }
             }
-        }
-
-        delay(2000L)
-        withContext(Main) {
             if (isSetOneOrMore)
                 zoomToSeeWholeTrack()
+
+            isMapSet = true
         }
     }
 
-    private suspend fun geoLocate(street: String) : Job = GlobalScope.launch(Dispatchers.IO) {
+//    private fun mapSetup() = CoroutineScope(Dispatchers.Default).launch {
+//
+//        if(currentLocationLatLng.latitude != 0.0) {
+//            withContext(Main) {
+//                map?.apply {
+//                    val defaultLocation = LatLng(
+//                        currentLocationLatLng.latitude,
+//                        currentLocationLatLng.longitude
+//                    )
+//                    val defaultStreet =
+//                        sharedPreferences.getString(KEY_DEFAULT_LOCATION_STREET_NAME, "")
+//                    addMarker(
+//                        MarkerOptions()
+//                            .position(defaultLocation)
+//                            .title(defaultStreet)
+//                    )
+//                }
+//            }
+//        }
+//
+//        withTimeout(6000L) {
+//            delay(2000L)
+//            notices?.forEach { notice ->
+//                notice.streets.forEach { street ->
+//                    if(!isGPRFailed) {
+//                        val job = geoLocate(street)
+//                        if (job.isCancelled) {
+//                            showErrorDialog()
+//                            return@withTimeout
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        delay(2000L)
+//        withContext(Main) {
+//            if (isSetOneOrMore)
+//                zoomToSeeWholeTrack()
+//        }
+//
+//        isMapSet = true
+//    }
+
+    private suspend fun geoLocate(street: String) = GlobalScope.launch(Dispatchers.IO) {
+
+        if(!isActive) return@launch
+
+        Log.d(DEBUG_TAG, "GEOLOCATING $street")
         val geocoder = Geocoder(requireContext())
         try {
             val result = geocoder.getFromLocationName("Sarajevo $street", 1)
@@ -175,6 +236,8 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
                 withContext(Main) {
                     drawCircle(latLng)
                 }
+            } else {
+                return@launch
             }
         } catch (e: Exception) {
             Log.d(TAG, "geoLocate error: ${e.message}")
@@ -222,20 +285,21 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
     }
 
     private fun toggleMap() {
+        TransitionManager.beginDelayedTransition(mapView, AutoTransition())
         if(mapView.visibility == View.VISIBLE) {
             mapView.visibility = View.GONE
             blackLineAboveTheMap.visibility = View.GONE
-            btnResizeMapDown.visibility = View.GONE
-            btnResizeMapUp.visibility = View.VISIBLE
-            bottomTab.visibility = View.VISIBLE
-            googleMapsLogo.visibility = View.VISIBLE
+            btnResizeMapUp.setBackgroundResource(R.drawable.ic_baseline_arrow_drop_up_24)
+            pbMapNotices.visibility = View.GONE
+            if(this::mapJob.isInitialized && mapJob.isActive) {
+                mapJob.cancel("map shut down")
+            }
         } else {
             mapView.visibility = View.VISIBLE
             blackLineAboveTheMap.visibility = View.VISIBLE
-            btnResizeMapDown.visibility = View.VISIBLE
-            btnResizeMapUp.visibility = View.GONE
-            bottomTab.visibility = View.GONE
-            googleMapsLogo.visibility = View.GONE
+            btnResizeMapUp.setBackgroundResource(R.drawable.ic_baseline_arrow_drop_down_24)
+
+            if(!isMapSet) startMap()
         }
     }
 

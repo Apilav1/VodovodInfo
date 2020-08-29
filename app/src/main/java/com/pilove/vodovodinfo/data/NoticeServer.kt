@@ -1,12 +1,19 @@
 package com.pilove.vodovodinfo.data
 
+import android.content.Context
+import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.pilove.vodovodinfo.BaseApplication
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.other.Constants.DEFAULT_VALUE_FOR_NOTICE_TITLE
+import com.pilove.vodovodinfo.other.Constants.KEY_LATEST_NOTICE_ID
+import com.pilove.vodovodinfo.other.Constants.SHARED_PREFERENCES_NAME
 import com.pilove.vodovodinfo.utils.recognizeDates
 import com.pilove.vodovodinfo.utils.recognizeStreets
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -30,23 +37,28 @@ import kotlin.collections.ArrayList
               </div>
              </div>
   */
-
 class NoticeServer @Inject constructor() {
 
     val currentNoticeIdUrl = "http://www.viksa.ba/vijesti/str/1"
     val noticeUrl = "http://www.viksa.ba/vijesti/"
 
-    private var job: Job = Job()
-
     private var errorHappened = false
 
-    fun getNotices(): LiveData<List<Notice>> {
+    lateinit var sharedPreferences: SharedPreferences
+
+    fun getNotices(context: Context): LiveData<List<Notice>> {
+
+        sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
 
        val result = MutableLiveData<List<Notice>>()
 
         errorHappened = false
 
         latestNoticeId = getNewestNoticeId()
+
+        sharedPreferences.edit()
+            .putInt(KEY_LATEST_NOTICE_ID, latestNoticeId)
+
 
         if(!errorHappened) {
             result.postValue(getNewNotices())
@@ -96,14 +108,22 @@ class NoticeServer @Inject constructor() {
                 if(errorHappened) break
 
                 var notice = getNextNotice(noticeId--)
-                var noticeForBase = if (!notices.isEmpty()) notices.first()
+                var noticeForBase = if (notices.isNotEmpty()) notices.first()
                 else null
 
-                if (!notices.isEmpty() &&
-                    notice.dateForComparison.before(noticeForBase?.dateForComparison) &&
-                    notice.text != DEFAULT_VALUE_FOR_NOTICE_TITLE
-                ) {
-                    break
+                if (notices.isNotEmpty()) {
+                    if(notice.dateForComparison.before(noticeForBase?.dateForComparison) &&
+                        notice.text != DEFAULT_VALUE_FOR_NOTICE_TITLE) {
+
+                        if(notice.dates.size > 0 &&
+                            notice.dates.any { it == noticeForBase?.dateForComparison }) {
+                            notices.add(notice)
+                        } else {
+                            break
+                        }
+                    } else if(notice.dateForComparison == noticeForBase?.dateForComparison) {
+                        notices.add(notice)
+                    }
                 } else if (notice.text != DEFAULT_VALUE_FOR_NOTICE_TITLE) {
                     notices.add(notice)
                 }
@@ -159,11 +179,12 @@ class NoticeServer @Inject constructor() {
 
                 val dates = ArrayList<Date>()
 
-                recognizeDates(noticeBodyText).forEach {
+                recognizeDates("$title $noticeBodyText").forEach {
                     dates.add(it)
                 }
 
-                newNotice = Notice(noticeId, title, date, dateForComparison, noticeBodyText, listOfStreets, dates)
+                newNotice = Notice(noticeId, title,
+                    date!!, dateForComparison!!, noticeBodyText, listOfStreets, dates)
 
                 return newNotice
             }

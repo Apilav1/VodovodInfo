@@ -27,4 +27,6 @@ object Constants {
     const val NO_NOTIFICATIONS_MODE = 3
 
     const val KEY_NOTIFICATIONS_TEXT_SIZE = "KEY_NOTIFICATIONS_TEXT_SIZE"
+
+    const val KEY_LATEST_NOTICE_ID = "KEY_LATEST_NOTICE_ID"
 }

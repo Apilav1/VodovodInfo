@@ -28,7 +28,7 @@ class MainRepository
             = noticeDAO.getNotices()
 
 
-    fun getNoticesFromServer() = noticeServer.getNotices()
+    fun getNoticesFromServer(context: Context) = noticeServer.getNotices(context)
 
 
     fun getConnectionLiveData(context: Context) = ConnectionLiveData(context)

@@ -19,11 +19,15 @@ class MainViewModel @ViewModelInject constructor(
 
     var isConnected = false
 
+    var isDataSetFromServer = false
+
     val notices: LiveData<List<Notice>> = ConnectionLiveData(app).switchMap {
         isConnected = it
-        if (it) {
-           mainRepository.getNoticesFromServer()
+        if (it && !isDataSetFromServer) {
+           isDataSetFromServer = true
+           mainRepository.getNoticesFromServer(app)
         } else {
+            isDataSetFromServer = false
             mainRepository.getNoticesFromDb()
         }
     }

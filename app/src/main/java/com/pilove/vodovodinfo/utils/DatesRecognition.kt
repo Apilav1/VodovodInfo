@@ -9,19 +9,25 @@ import kotlin.collections.ArrayList
 
 fun recognizeDates(noticeText: String): ArrayList<Date> {
 
-    var result = ArrayList<Date>()
+    var result = ArrayList<Date>(0)
 
-    noticeText.split(" ").toTypedArray().forEach { word ->
-        if(word[0].isDigit()){
-            try {
-                val w = if(word.last() == '.') word.removeSuffix(".") else word
-                val date = SimpleDateFormat("dd.MM.yyyy").parse(w)
+    try {
 
-                if(!result.contains(date))
-                    result.add(date)
+        noticeText.split(" ").toTypedArray().forEach { word ->
+            if (word[0].isDigit() && word.length > 9) {
+                try {
+                    val w = if (word.last() == '.') word.removeSuffix(".") else word
+                    val date = SimpleDateFormat("dd.MM.yyyy").parse(w)
 
-            } catch (e: Exception) {}
+                    if (!result.contains(date))
+                        result.add(date)
+
+                } catch (e: Exception) {
+                }
+            }
         }
+    } catch (e: Exception) {
+        Log.d(DEBUG_TAG, "Greska kod datuma")
     }
 
     return result

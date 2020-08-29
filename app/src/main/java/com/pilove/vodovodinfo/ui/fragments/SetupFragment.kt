@@ -1,6 +1,7 @@
 package com.pilove.vodovodinfo.ui.fragments
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.SharedPreferences
 import android.location.Address
@@ -16,12 +17,11 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.*
+import com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.other.Constants
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
@@ -81,7 +81,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
             tvNext.visibility = View.GONE
             tvSkip.visibility = View.GONE
             tvDiclamer.text = ""
-            pbMapNoticesSetup.visibility = View.VISIBLE
+//            pbMapNoticesSetup.visibility = View.VISIBLE
         }
 
         if(!isFirstAppTime) {
@@ -127,14 +127,53 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
         tvSkip.setOnClickListener {
             if(it.isVisible && !isHostedByFragment) {
-                if(writeToSharedPref()) {
-                    nextFrag(savedInstanceState)
-                }
+
+                nextFrag(savedInstanceState)
+
             } else if(it.isVisible) {
                 //retry again
                 geoLocate(true)
             }
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun setFusedLocationListener() {
+        fusedLocationProviderClient!!.lastLocation
+            .addOnSuccessListener {
+                    location ->
+                if (location == null || location.accuracy > 100) {
+                   val mLocationCallback = object : LocationCallback() {
+                        override fun onLocationResult(locationResult: LocationResult?) {
+                            Log.d(DEBUG_TAG, "receved loc 150")
+
+
+                            if (locationResult != null && locationResult.locations.isNotEmpty()) {
+                                lastKnownLocation = locationResult.locations[0]
+                                moveCamera()
+                                geoLocate()
+                            } else {
+                                Log.d(DEBUG_TAG, "ERRRORRR 155")
+                                showErrorDialog()
+                            }
+                        }
+                    }
+
+                    val currentLocationRequest = LocationRequest()
+                    currentLocationRequest.setInterval(500)
+                        .setFastestInterval(0)
+                        .setMaxWaitTime(0)
+                        .setSmallestDisplacement(0F)
+                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                    fusedLocationProviderClient!!.requestLocationUpdates(currentLocationRequest,
+                        mLocationCallback, null)
+                } else {
+                    lastKnownLocation = fusedLocationProviderClient.lastLocation.result
+                }
+            }
+            .addOnFailureListener {
+                    showErrorDialog()
+            }
     }
 
     private fun nextFrag(savedInstanceState: Bundle?) {
@@ -245,63 +284,37 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
     }
 
 
+    @SuppressLint("Missing permissions")
     private fun getDeviceLocation() {
 
-//        val request = LocationRequest().apply {
-//            interval = LOCATION_UPDATE_INTERVAL
-//            fastestInterval = FASTEST_LOCATION_INTERVAL
-//            priority = PRIORITY_HIGH_ACCURACY
-//        }
-//        if (ActivityCompat.checkSelfPermission(
-//                requireContext(),
-//                Manifest.permission.ACCESS_FINE_LOCATION
-//            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-//                requireContext(),
-//                Manifest.permission.ACCESS_COARSE_LOCATION
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) {
-//
-//            return
-//        }
-//        fusedLocationProviderClient.requestLocationUpdates(
-//            request,
-//            locationCallback,
-//            Looper.getMainLooper()
-//        )
-        /*
-         * Get the best and most recent location of the device, which may be null in rare
-         * cases when a location is not available.
-         */
-        pbMapNoticesSetup.visibility = View.VISIBLE
+//        pbMapNoticesSetup.visibility = View.VISIBLE
         try {
             if (isPermissionGranted) {
                 val locationResult = fusedLocationProviderClient.lastLocation
                 locationResult.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
 
-                        if(task == null ||
+                        if(task.result == null ||
+                            task.result?.accuracy!! > 100 ||
                             (task.result?.latitude == defaultLocation.latitude &&
                                     task.result?.longitude == defaultLocation.longitude)) {
-                            showErrorDialog()
-                            return@addOnCompleteListener
-                        }
-                        Log.d(
-                            DEBUG_TAG,
-                            "TASK is success ${task.result?.latitude} " +
-                                    "${task.result?.longitude}")
-                        lastKnownLocation = task.result
+                            Log.d(DEBUG_TAG, "setting up fusedlocalist")
 
-                        if(lastKnownLocation != null || lastKnownLocation?.latitude != null) {
-                            map?.isMyLocationEnabled = true
-                            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                LatLng(lastKnownLocation!!.latitude,
-                                    lastKnownLocation!!.longitude), DEFAULT_ZOOM.toFloat()))
+                            setFusedLocationListener()
+                        } else {
+                            Log.d(
+                                DEBUG_TAG,
+                                "TASK is success ${task.result?.latitude} " +
+                                        "${task.result?.longitude}"
+                            )
+                            lastKnownLocation = task.result
 
-
-                            geoLocate()
-                        }
-                        else {
-                            showErrorDialog()
+                            if (lastKnownLocation != null || lastKnownLocation?.latitude != null) {
+                                moveCamera()
+                                geoLocate()
+                            } else {
+                                showErrorDialog()
+                            }
                         }
 
                     } else {
@@ -317,6 +330,19 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
         } catch (e: SecurityException) {
             Log.e("Exception: %s", e.message, e)
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun moveCamera() {
+        map?.isMyLocationEnabled = true
+        map?.moveCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                LatLng(
+                    lastKnownLocation!!.latitude,
+                    lastKnownLocation!!.longitude
+                ), DEFAULT_ZOOM.toFloat()
+            )
+        )
     }
 
     private fun geoLocate(tryAgain: Boolean = false) = GlobalScope.launch(Main) {
@@ -368,7 +394,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
             Log.d(DEBUG_TAG, "geoLocate error: ${e.message}")
             withContext(Main) {
                 showErrorDialog()
-                pbMapNoticesSetup.visibility = View.VISIBLE
+//                pbMapNoticesSetup.visibility = View.VISIBLE
             }
         }
     }
@@ -397,7 +423,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
             }
 
             setNegativeButton(getText(R.string.CANCEL)) { dialog, _ ->
-                pbMapNoticesSetup.visibility = View.GONE
+//                pbMapNoticesSetup.visibility = View.GONE
                 dialog.dismiss()
             }
 
@@ -410,7 +436,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
             setAdapter(arrayAdapter) { _, which ->
                 tvAddress.text = arrayAdapter.getItem(which)
-                if(isHostedByFragment) tvNext.visibility = View.VISIBLE
+                tvNext.text = getText(R.string.YES)
             }
             show()
         }

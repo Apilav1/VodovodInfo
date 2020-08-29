@@ -13,7 +13,8 @@ fun recognizeStreets(noticeText: String): ArrayList<String> {
                 word.removeSuffix(".")
             else word
 
-            if(street.contains("ulic") || street.equals("na")) {
+            if(street.contains("ulic") || street.equals("na") ||
+                    street.contains("došlo")) {
                 street = ""
             } else if(w.equals("i") || w.equals("u")
                 || w.equals("a")) {
@@ -31,6 +32,7 @@ fun recognizeStreets(noticeText: String): ArrayList<String> {
             }
         }
         if(word.contains("ulic")) tracking = true
+        if(word.contains("došlo")) tracking = false
         if(word.contains(".") && !word.contains("ef")) tracking = false
     }
 
