@@ -80,6 +80,8 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        WorkManager.getInstance(this).cancelAllWorkByTag(NewNoticeWorker.myName)
+
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
@@ -88,6 +90,7 @@ class MainActivity : AppCompatActivity() {
             15, TimeUnit.MINUTES,
             5, TimeUnit.MINUTES
             )
+            .addTag(NewNoticeWorker.myName)
             .setConstraints(constraints)
             .build()
 

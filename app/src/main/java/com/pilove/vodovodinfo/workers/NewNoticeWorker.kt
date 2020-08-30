@@ -105,21 +105,22 @@ class NewNoticeWorker constructor(
                         }
 
                         Log.d(DEBUG_TAG, "from worker: app notified")
-                    } else {
-                        var builder = NotificationCompat
-                            .Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
-                            .setSmallIcon(R.drawable.water_icon_24)
-                            .setContentTitle("Ovaj sat nisam imao nista, jer je $latestNoticeId")
-                            .setContentText(nextNotice.toString())
-                            .setStyle(NotificationCompat.BigTextStyle()
-                                .bigText(nextNotice.toString()))
-                            .setPriority(NotificationCompat.PRIORITY_HIGH)
-
-                        with(NotificationManagerCompat.
-                        from(applicationContext)){
-                            notify(NOTIFICATION_ID, builder.build())
-                        }
                     }
+                }
+            }
+            else {
+                var builder = NotificationCompat
+                    .Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.water_icon_24)
+                    .setContentTitle("Id: $latestNoticeId, nemam nisza")
+                    .setContentText("nema nista")
+                    .setStyle(NotificationCompat.BigTextStyle()
+                        .bigText("id: $latestNoticeId"))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+
+                with(NotificationManagerCompat.
+                from(applicationContext)){
+                    notify(NOTIFICATION_ID, builder.build())
                 }
             }
         } catch (e: Exception) {

@@ -59,6 +59,7 @@ class NoticeServer @Inject constructor() {
 
         sharedPreferences.edit()
             .putInt(KEY_LATEST_NOTICE_ID, latestNoticeId)
+            .apply()
 
 
         if(!errorHappened) {

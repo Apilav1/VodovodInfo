@@ -62,6 +62,8 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
     private var isHostedByFragment = false
 
+    private var jobLaunchErrorDialog: Job? = null
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -124,6 +126,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
             if(it.isVisible && !isHostedByFragment) {
                 nextFrag(savedInstanceState)
             }
+            jobLaunchErrorDialog?.cancel()
         }
 
         tvTryAgain.setOnClickListener {
@@ -138,9 +141,9 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
     private fun setFusedLocationListener() {
         var isReceived = false
 
-        GlobalScope.launch {
+        jobLaunchErrorDialog = GlobalScope.launch {
             delay(5000L)
-            if(!isReceived) {
+            if(!isReceived && isActive) {
                 showErrorDialog()
             }
         }

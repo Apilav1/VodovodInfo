@@ -71,6 +71,8 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
 
     private lateinit var mapJob: Job
 
+    private var isThisResumed: Boolean = false
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -100,7 +102,12 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
                 val maxIdNewNotice = it.maxByOrNull { n -> n.id }
 
                 if(maxIdOldNotices?.id != null && maxIdNewNotice?.id != null &&
-                    maxIdOldNotices.id >= maxIdNewNotice.id) return@Observer
+                    maxIdOldNotices.id >= maxIdNewNotice.id && !isThisResumed) return@Observer
+
+                isThisResumed = false
+                Log.d(DEBUG_TAG, "DOING ADAPTER")
+                if(isThisResumed)
+                    setupRecycleView()
 
                 notices = it as ArrayList<Notice>
                 noticeAdapter.submitList(notices!!)
@@ -278,6 +285,7 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
     override fun onResume() {
         super.onResume()
         mapView?.onResume()
+        isThisResumed = true
     }
 
     override fun onStart() {

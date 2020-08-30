@@ -2,6 +2,7 @@ package com.pilove.vodovodinfo.ui.fragments
 
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import androidx.core.view.isVisible
@@ -11,14 +12,17 @@ import androidx.navigation.fragment.findNavController
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
 import com.pilove.vodovodinfo.R
+import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.other.Constants.NOTIFICATIONS_ALL
 import com.pilove.vodovodinfo.other.Constants.KEY_NOTIFICATIONS_MODE
 import com.pilove.vodovodinfo.other.Constants.KEY_NOTIFICATIONS_TEXT_SIZE
 import com.pilove.vodovodinfo.other.Constants.NOTIFICATIONS_ONLY_MY_STREET
 import com.pilove.vodovodinfo.other.Constants.NO_NOTIFICATIONS_MODE
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_settings.*
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     @Inject
@@ -58,10 +62,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             }
         }
 
+        npSettings.value = sharedPreferences
+                                .getFloat(KEY_NOTIFICATIONS_TEXT_SIZE, 16F).toInt()
         npSettings.minValue = 16
         npSettings.maxValue = 40
 
-        npSettings.setOnValueChangedListener { picker, oldVal, newVal ->
+        npSettings.setOnValueChangedListener { _, _, newVal ->
             btnSave.visibility = View.VISIBLE
             tvExampleText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, newVal.toFloat())
         }
@@ -83,6 +89,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             }
         }
 
+        when(sharedPreferences.getInt(KEY_NOTIFICATIONS_MODE, 2)) {
+            1 -> radioGroup.check(R.id.firstRB)
+            2 -> radioGroup.check(R.id.secondRB)
+            3 -> radioGroup.check(R.id.thirdRB)
+        }
+
         radioGroup.setOnCheckedChangeListener { _ , checkedId ->
             btnSave.visibility = View.VISIBLE
             when(checkedId) {
@@ -102,9 +114,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private fun writeToSharedPref(): Boolean {
 
+        Log.d(DEBUG_TAG, "PISEM SIZE ${npSettings.value.toFloat()}")
         sharedPreferences.edit()
             .putInt(KEY_NOTIFICATIONS_MODE, notificationMode)
-            .putFloat(KEY_NOTIFICATIONS_TEXT_SIZE, tvExampleText.textSize)
+            .putFloat(KEY_NOTIFICATIONS_TEXT_SIZE, npSettings.value.toFloat())
             .apply()
 
         return true
