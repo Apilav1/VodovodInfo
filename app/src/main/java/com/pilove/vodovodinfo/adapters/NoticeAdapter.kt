@@ -1,9 +1,6 @@
 package com.pilove.vodovodinfo.adapters
 
-import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
-import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -12,18 +9,14 @@ import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.data.Notice
-import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.other.Constants.KEY_NOTIFICATIONS_TEXT_SIZE
-import com.pilove.vodovodinfo.other.Constants.SHARED_PREFERENCES_NAME
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.fragment_settings.*
 import kotlinx.android.synthetic.main.item_notice.view.*
-import javax.inject.Inject
+import java.text.SimpleDateFormat
 import kotlin.collections.ArrayList
 
 class NoticeAdapter : RecyclerView.Adapter<NoticeAdapter.NoticeViewHolder>() {
 
-    inner class NoticeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    class NoticeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
 
     lateinit var sharedPreferences: SharedPreferences
@@ -63,6 +56,9 @@ class NoticeAdapter : RecyclerView.Adapter<NoticeAdapter.NoticeViewHolder>() {
             tvNoticeBody.text = notice.text
             tvTitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
             tvNoticeBody.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
+            val dateString = SimpleDateFormat("dd.MM.yyyy 'u' HH:mm")
+                                .format(notice.date)
+            tvNoticeDate.text = dateString
         }
     }
 

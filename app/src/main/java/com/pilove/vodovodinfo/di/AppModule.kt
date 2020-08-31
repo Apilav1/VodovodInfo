@@ -1,7 +1,6 @@
 package com.pilove.vodovodinfo.di
 
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import androidx.room.Room
@@ -11,7 +10,6 @@ import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_LAT
 import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_LNG
 import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_STREET_NAME
 import com.pilove.vodovodinfo.other.Constants.KEY_IS_FIRST_TIME
-import com.pilove.vodovodinfo.other.Constants.SHARED_PREFERENCES_NAME
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

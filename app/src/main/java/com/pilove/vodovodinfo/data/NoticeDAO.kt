@@ -1,9 +1,7 @@
 package com.pilove.vodovodinfo.data
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.room.*
-import com.pilove.vodovodinfo.data.Notice
 
 @Dao
 interface NoticeDAO {

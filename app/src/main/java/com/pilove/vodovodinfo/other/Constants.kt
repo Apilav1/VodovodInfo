@@ -14,7 +14,6 @@ object Constants {
 
     const val DEFAULT_VALUE_FOR_NOTICE_TITLE = "Default"
 
-    const val SHARED_PREFERENCES_NAME = "sharedPref"
     //for when the app is first time open to show setup fragment
     const val KEY_IS_FIRST_TIME = "KEY_IS_FIRST_TIME"
     const val KEY_DEFAULT_LOCATION_STREET_NAME = "KEY_DEFAULT_LOCATION_STREET_NAME"

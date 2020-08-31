@@ -9,9 +9,6 @@ import android.content.IntentFilter
 import android.net.*
 import android.os.Build
 import androidx.lifecycle.LiveData
-import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 
 class ConnectionLiveData (val context: Context) : LiveData<Boolean>() {
 
@@ -20,8 +17,8 @@ class ConnectionLiveData (val context: Context) : LiveData<Boolean>() {
     private lateinit var connectivityManagerCallback: ConnectivityManager.NetworkCallback
 
     private val networkRequestBuilder: NetworkRequest.Builder = NetworkRequest.Builder()
-        .addTransportType(android.net.NetworkCapabilities.TRANSPORT_CELLULAR)
-        .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
+        .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+        .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
 
 
     override fun onActive() {

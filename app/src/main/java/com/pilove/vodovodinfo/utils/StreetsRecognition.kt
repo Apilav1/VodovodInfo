@@ -7,17 +7,18 @@ fun recognizeStreets(noticeText: String): ArrayList<String> {
 
     for (word in noticeText.split(" ").toTypedArray()) {
         if(tracking) {
-            var w = if(word.contains(","))
+            val w = if(word.contains(","))
                 word.removeSuffix(",")
             else if(word.contains("."))
                 word.removeSuffix(".")
             else word
 
-            if(street.contains("ulic") || street.equals("na") ||
+            if(street.contains("ulic") || street == "na" ||
                     street.contains("došlo")) {
                 street = ""
-            } else if(w.equals("i") || w.equals("u")
-                || w.equals("a")) {
+            } else if(w == "i" || w == "u"
+                || w == "a"
+            ) {
 
                 if(street.isNotEmpty()) streets.add(street)
                 street = ""
@@ -28,7 +29,7 @@ fun recognizeStreets(noticeText: String): ArrayList<String> {
                     streets.add(street)
                     street = ""
             } else {
-                street += w + " "
+                street += "$w "
             }
         }
         if(word.contains("ulic")) tracking = true

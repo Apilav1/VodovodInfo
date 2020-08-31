@@ -11,7 +11,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.transition.AutoTransition
@@ -35,10 +34,8 @@ import com.pilove.vodovodinfo.ui.viewModels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_notices.*
-import kotlinx.android.synthetic.main.fragment_settings.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.NonCancellable.isActive
 import javax.inject.Inject
 
 const val ERROR_DIALOG_TAG = "ErrorDialog"
@@ -88,10 +85,6 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         setupRecycleView()
 
         requireActivity().bottomNavigationView?.visibility = View.VISIBLE
-
-        //TODO: resumed fragment map redrawing circles problem
-        //TODO: fix notifications 2600
-        //TODO: fix all warnings
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
 

@@ -5,7 +5,6 @@ import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import com.pilove.vodovodinfo.other.Constants.DEFAULT_VALUE_FOR_NOTICE_TITLE
 import java.util.Date
-import java.text.SimpleDateFormat
 
 @Entity(tableName = "Notices")
 data class Notice (
@@ -43,7 +42,7 @@ data class Notice (
         }
         s += "\ndates: \n"
         dates.forEach {
-            s += "${it.toString()}, "
+            s += "$it, "
         }
         s += "\n----------------------------------------\n"
 

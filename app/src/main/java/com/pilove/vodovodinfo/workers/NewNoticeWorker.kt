@@ -5,21 +5,17 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
-import android.icu.util.Calendar
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.preference.PreferenceManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.data.NoticeServer
-import com.pilove.vodovodinfo.other.Constants
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.other.Constants.DEFAULT_VALUE_FOR_NOTICE_TITLE
 import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_STREET_NAME
@@ -30,12 +26,8 @@ import com.pilove.vodovodinfo.other.Constants.NOTIFICATIONS_ONLY_MY_STREET
 import com.pilove.vodovodinfo.other.Constants.NOTIFICATION_CHANNEL_ID
 import com.pilove.vodovodinfo.other.Constants.NOTIFICATION_CHANNEL_NAME
 import com.pilove.vodovodinfo.other.Constants.NOTIFICATION_ID
-import com.pilove.vodovodinfo.other.Constants.SHARED_PREFERENCES_NAME
-import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.lang.Exception
 import java.util.*
-import javax.inject.Inject
 
 class NewNoticeWorker constructor(
     context: Context, workerParams: WorkerParameters): Worker(context, workerParams) {
@@ -76,12 +68,16 @@ class NewNoticeWorker constructor(
 
             if(idResult > latestNoticeId) {
 
+                sharedPreferences.edit()
+                    .putInt(KEY_LATEST_NOTICE_ID, NoticeServer.latestNoticeId)
+                    .apply()
+
                 val nextNotice = noticeServer.getNextNotice(idResult)
 
                 if(nextNotice.title != DEFAULT_VALUE_FOR_NOTICE_TITLE) {
 
                     if(nextNotice.date.date == Date().date || nextNotice.dates.equals(Date().date)) {
-                        var builder = NotificationCompat
+                        val builder = NotificationCompat
                             .Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
                             .setSmallIcon(R.drawable.water_icon_24)
                             .setContentTitle(applicationContext.
@@ -106,21 +102,6 @@ class NewNoticeWorker constructor(
 
                         Log.d(DEBUG_TAG, "from worker: app notified")
                     }
-                }
-            }
-            else {
-                var builder = NotificationCompat
-                    .Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
-                    .setSmallIcon(R.drawable.water_icon_24)
-                    .setContentTitle("Id: $latestNoticeId, nemam nisza")
-                    .setContentText("nema nista")
-                    .setStyle(NotificationCompat.BigTextStyle()
-                        .bigText("id: $latestNoticeId"))
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-
-                with(NotificationManagerCompat.
-                from(applicationContext)){
-                    notify(NOTIFICATION_ID, builder.build())
                 }
             }
         } catch (e: Exception) {

@@ -1,20 +1,18 @@
 package com.pilove.vodovodinfo.data
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.preference.PreferenceManager
-import com.pilove.vodovodinfo.BaseApplication
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
 import com.pilove.vodovodinfo.other.Constants.DEFAULT_VALUE_FOR_NOTICE_TITLE
 import com.pilove.vodovodinfo.other.Constants.KEY_LATEST_NOTICE_ID
-import com.pilove.vodovodinfo.other.Constants.SHARED_PREFERENCES_NAME
+import com.pilove.vodovodinfo.utils.isNoticeToBeIgnored
 import com.pilove.vodovodinfo.utils.recognizeDates
 import com.pilove.vodovodinfo.utils.recognizeStreets
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -40,8 +38,8 @@ import kotlin.collections.ArrayList
   */
 class NoticeServer @Inject constructor() {
 
-    val currentNoticeIdUrl = "http://www.viksa.ba/vijesti/str/1"
-    val noticeUrl = "http://www.viksa.ba/vijesti/"
+    private val currentNoticeIdUrl = "http://www.viksa.ba/vijesti/str/1"
+    private val noticeUrl = "http://www.viksa.ba/vijesti/"
 
     private var errorHappened = false
 
@@ -72,7 +70,7 @@ class NoticeServer @Inject constructor() {
     }
 
     fun getNewestNoticeId(): Int  = runBlocking(Dispatchers.IO) {
-        var doc: Document? = null
+        val doc: Document?
         var result: String? = null
 
         try {
@@ -80,14 +78,14 @@ class NoticeServer @Inject constructor() {
 
             doc.let {
 
-                var elemt: Element? =
+                val elemt: Element? =
                     it?.getElementsByAttributeValue("id", "obavjestenja")?.first()
 
                 result = elemt?.getElementsByClass("row ml-0 mr-0 mb-3 nodec")?.html()?.
                 substringBefore("\">")?.
                 substringAfterLast("/")
 
-                Log.d(DEBUG_TAG, result)
+                Log.d(DEBUG_TAG, result!!)
 
             }
 
@@ -99,9 +97,9 @@ class NoticeServer @Inject constructor() {
         result?.toInt() ?: 0
     }
 
-    fun getNewNotices(): List<Notice> = runBlocking(Dispatchers.IO) {
+    private fun getNewNotices(): List<Notice> = runBlocking(Dispatchers.IO) {
 
-        var notices = ArrayList<Notice>()
+        val notices = ArrayList<Notice>()
         var noticeId = latestNoticeId
 
         withTimeout(5000L) {
@@ -109,8 +107,8 @@ class NoticeServer @Inject constructor() {
 
                 if(errorHappened) break
 
-                var notice = getNextNotice(noticeId--)
-                var noticeForBase = if (notices.isNotEmpty()) notices.first()
+                val notice = getNextNotice(noticeId--)
+                val noticeForBase = if (notices.isNotEmpty()) notices.first()
                 else null
 
                 if (notices.isNotEmpty()) {
@@ -136,13 +134,14 @@ class NoticeServer @Inject constructor() {
             Log.d(DEBUG_TAG, it.toString())
         }
 
-        notices as List<Notice>
+        notices
     }
 
+    @SuppressLint("SimpleDateFormat")
     fun getNextNotice(noticeId: Int): Notice {
 
-        var element : Element?
-        var doc: Document? = null
+        val element : Element?
+        val doc: Document? = null
         var newNotice: Notice
 
         try {
@@ -152,16 +151,17 @@ class NoticeServer @Inject constructor() {
             doc.let {
                 //example of html structure that is being scraped is at the beginning of file
 
-                var noticeBody = element!!.getElementsByClass("col-12 mt-4")
-                var noticeElement = noticeBody.elementAt(0)
-                var timeReleased = noticeElement.child(0).text()
-                var title = noticeElement.child(1).text()
-                var noticeBodyText = noticeElement.child(2).text()
+                val noticeBody = element!!.getElementsByClass("col-12 mt-4")
+                val noticeElement = noticeBody.elementAt(0)
+                val timeReleased = noticeElement.child(0).text()
+                val title = noticeElement.child(1).text()
+                val noticeBodyText = noticeElement.child(2).text()
 
                 val titleSplit = title.split(" ").toTypedArray()
 
-                if(titleSplit.first() == "Služba")
+                if(isNoticeToBeIgnored(titleSplit)) {
                     return@let
+                }
 
                 val dateAndTime = timeReleased
                     .substringAfter("Objavljeno")
@@ -173,7 +173,7 @@ class NoticeServer @Inject constructor() {
                 val dateForComparison = SimpleDateFormat("dd.MM.yyyy")
                     .parse(dateAndTime.substringBefore(" "))
 
-                var listOfStreets = ArrayList<String>()
+                val listOfStreets = ArrayList<String>()
 
                 recognizeStreets(noticeBodyText).forEach {
                     listOfStreets.add(it)
