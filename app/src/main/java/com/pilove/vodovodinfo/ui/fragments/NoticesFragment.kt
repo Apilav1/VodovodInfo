@@ -35,8 +35,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_notices.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import javax.inject.Inject
+import kotlin.properties.Delegates
 
 const val ERROR_DIALOG_TAG = "ErrorDialog"
 
@@ -166,49 +168,54 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
             }
         }
 
-        mapJob = GlobalScope.launch {
+        mapJob = GlobalScope.launch(handler) {
             notices?.forEach { notice ->
                 notice.streets.forEach { street ->
-                    if(!isGPRFailed) {
-                        val job = geoLocate(street)
-                        if (job.isCancelled) {
-                            showErrorDialog()
-                        }
-                    }
+                        geoLocate(street).join()
                 }
             }
-            if (isSetOneOrMore)
-                zoomToSeeWholeTrack()
 
-            isMapSet = true
-        }
-    }
-
-    private suspend fun geoLocate(street: String) = GlobalScope.launch(Dispatchers.IO) {
-
-        if(!isActive) return@launch
-
-        Log.d(DEBUG_TAG, "GEOLOCATING $street")
-        val geocoder = Geocoder(requireContext())
-        try {
-            val result = geocoder.getFromLocationName("Sarajevo $street", 1)
-            val address : Address = result[0]
-            if (result.isNotEmpty()) {
-                val latLng = LatLng(address.latitude, address.longitude)
-                bounds.include(latLng)
-                isSetOneOrMore = true
+            if(exceptionHappened) {
                 withContext(Main) {
-                    drawCircle(latLng)
+                    showErrorDialog()
+                }
+            }
+
+            if (isSetOneOrMore && !exceptionHappened) {
+                withContext(Main) {
                     zoomToSeeWholeTrack()
                 }
-              }
-        } catch (e: Exception) {
-            Log.d(TAG, "geoLocate error: ${e.message}")
+                isMapSet = true
+            }
+        }
+    }
+    private var exceptionHappened = false
 
-            this.cancel("Error", e)
+    private val handler = CoroutineExceptionHandler { _, exception ->
+        Log.d(DEBUG_TAG, "CoroutineExceptionHandler got $exception")
+        exceptionHappened = true
+    }
 
-            if(e.message.equals("grpc failed")) {
-                isGPRFailed = true
+    private fun geoLocate(street: String) = GlobalScope.launch(handler) {
+
+        launch(IO) {
+            try {
+                val geocoder = Geocoder(requireContext())
+                val result = geocoder.getFromLocationName("Sarajevo $street", 1)
+                val address : Address = result[0]
+                if (result.isNotEmpty()) {
+                    val latLng = LatLng(address.latitude, address.longitude)
+                    bounds.include(latLng)
+                    withContext(Main) {
+                        drawCircle(latLng)
+                    }
+                    isSetOneOrMore = true
+                } else {
+                    throw Exception()
+                }
+            } catch (e: Exception) {
+                Log.d(DEBUG_TAG, "bacam gresku")
+                throw e
             }
         }
     }
@@ -217,6 +224,9 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
         ErrorDialog().apply {
             setYesListener {
                 mapSetup()
+            }
+            setNoListener {
+                toggleMap()
             }
         }.show(parentFragmentManager, ERROR_DIALOG_TAG)
     }

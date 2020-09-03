@@ -37,6 +37,9 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
+import java.lang.ArithmeticException
+import java.lang.Exception
+import java.lang.NullPointerException
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -140,14 +143,6 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
     @SuppressLint("MissingPermission")
     private fun setFusedLocationListener() {
-        var isReceived = false
-
-        jobLaunchErrorDialog = GlobalScope.launch {
-            delay(5000L)
-            if(!isReceived && isActive) {
-                showErrorDialog()
-            }
-        }
 
         fusedLocationProviderClient.lastLocation
             .addOnSuccessListener {
@@ -155,7 +150,6 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
                 if (location == null || location.accuracy > 100) {
                    val mLocationCallback = object : LocationCallback() {
                         override fun onLocationResult(locationResult: LocationResult?) {
-                            isReceived = true
 
                             if(locationResult != null
                                 && locationResult.lastLocation.accuracy < 100) {
@@ -360,60 +354,66 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
     }
 
     private fun geoLocate(tryAgain: Boolean = false) = GlobalScope.launch(IO) {
-        if(lastKnownLocation == null || lastKnownLocation?.latitude == null) return@launch
 
-        val geocoder = Geocoder(requireContext())
-        try {
-            val result = geocoder.getFromLocation(lastKnownLocation!!.latitude,
-                                                    lastKnownLocation!!.longitude, 1)
-            if(tryAgain) {
-                //radius search
-                val lat = lastKnownLocation!!.latitude
-                val long = lastKnownLocation!!.longitude
-                val boundaries = listOf (
-                    LatLng(lat + 0.001, long),
-                    LatLng(lat, long + 0.001),
-                    LatLng(lat + 0.001, long + 0.001),
-                    LatLng(lat + 0.001, long - 0.001),
-                    LatLng(lat - 0.001, long + 0.001),
-                    LatLng(lat - 0.001, long - 0.001),
-                    LatLng(lat - 0.001, long),
-                    LatLng(lat, long - 0.001)
-                )
+        val handler = CoroutineExceptionHandler { _, exception ->
+            Log.d(DEBUG_TAG, "CoroutineExceptionHandler got $exception")
+            showErrorDialog()
+        }
 
-                boundaries.forEach {
-                    result += geocoder.getFromLocation(it.latitude, it.longitude, 1)
-                }
-            }
+        val job = GlobalScope.launch(handler) {
+            try {
+                if(lastKnownLocation == null || lastKnownLocation?.latitude == null)
+                    throw Exception()
 
-            if(result.isNotEmpty() && result?.size == 1)
-            {
-                val address : Address = result[0]
-                withContext(Main) {
-                    tvAddress.visibility = View.VISIBLE
-                    tvAddress.text = address.featureName
-                    tvNext.visibility = View.VISIBLE
-                    tvTryAgain.visibility = View.VISIBLE
-                    Toast.makeText(requireContext(),
-                        getText(R.string.TOAST_TRY_AGAIN_TEXT), Toast.LENGTH_LONG).show()
-                    pbMapNoticesSetup.visibility = View.GONE
+                val geocoder = Geocoder(requireContext())
+                val result = geocoder.getFromLocation(lastKnownLocation!!.latitude,
+                    lastKnownLocation!!.longitude, 1)
+                if(tryAgain) {
+                    //radius search
+                    val lat = lastKnownLocation!!.latitude
+                    val long = lastKnownLocation!!.longitude
+                    val boundaries = listOf(
+                        LatLng(lat + 0.001, long),
+                        LatLng(lat, long + 0.001),
+                        LatLng(lat + 0.001, long + 0.001),
+                        LatLng(lat + 0.001, long - 0.001),
+                        LatLng(lat - 0.001, long + 0.001),
+                        LatLng(lat - 0.001, long - 0.001),
+                        LatLng(lat - 0.001, long),
+                        LatLng(lat, long - 0.001)
+                    )
+
+                    boundaries.forEach {
+                        result += geocoder.getFromLocation(it.latitude, it.longitude, 1)
+                    }
                 }
-            }
-            else if(result.isNotEmpty() && result?.size!! > 1){
-                result.forEach {
-                    Log.d(DEBUG_TAG, it.toString())
+
+                if(result.isNotEmpty() && result?.size == 1)
+                {
+                    val address : Address = result[0]
+                    withContext(Main) {
+                        tvAddress.visibility = View.VISIBLE
+                        tvAddress.text = address.featureName
+                        tvNext.visibility = View.VISIBLE
+                        tvTryAgain.visibility = View.VISIBLE
+//                    Toast.makeText(requireContext(),
+//                        getText(R.string.TOAST_TRY_AGAIN_TEXT), Toast.LENGTH_LONG).show()
+                        pbMapNoticesSetup.visibility = View.GONE
+                    }
                 }
-                withContext(Main) {
-                    showAlertDialog(result)
+                else if(result.isNotEmpty() && result?.size!! > 1){
+                    result.forEach {
+                        Log.d(DEBUG_TAG, it.toString())
+                    }
+                    withContext(Main) {
+                        showAlertDialog(result)
+                    }
                 }
-            }
-        } catch (e: Exception) {
-            Log.d(DEBUG_TAG, "geoLocate error: ${e.message}")
-            withContext(Main) {
-                showErrorDialog()
-//                pbMapNoticesSetup.visibility = View.VISIBLE
+            } catch (e: Exception) {
+                throw e
             }
         }
+        job.join()
     }
 
     private fun showErrorDialog() {

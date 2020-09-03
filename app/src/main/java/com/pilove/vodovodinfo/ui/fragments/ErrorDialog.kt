@@ -14,6 +14,12 @@ class ErrorDialog : DialogFragment() {
         yesListener = listener
     }
 
+    private var noListener: (() -> Unit)? = null
+
+    fun setNoListener(listener: () -> Unit) {
+        noListener = listener
+    }
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return AlertDialog.Builder(requireContext())
             .setTitle(getText(R.string.ERROR_DIALOG_TITLE))
@@ -26,6 +32,9 @@ class ErrorDialog : DialogFragment() {
             }
             .setNegativeButton(getText(R.string.ERROR_DIALOG_NO)) { dialogInterface, _ ->
                 dialogInterface.cancel()
+                noListener?.let { no ->
+                    no()
+                }
             }
             .create()
     }
