@@ -58,7 +58,8 @@ class NoticeAdapter : RecyclerView.Adapter<NoticeAdapter.NoticeViewHolder>() {
             tvNoticeBody.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
             val dateString = SimpleDateFormat("dd.MM.yyyy 'u' HH:mm")
                                 .format(notice.date)
-            tvNoticeDate.text = dateString
+            tvNoticeDate.text = resources.getString(R.string.POSTED, dateString)
+            tvNoticeDate.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
         }
     }
 

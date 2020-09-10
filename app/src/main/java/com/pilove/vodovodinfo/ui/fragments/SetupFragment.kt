@@ -25,21 +25,21 @@ import com.google.android.gms.maps.model.LatLng
 import com.pilove.vodovodinfo.R
 import com.pilove.vodovodinfo.other.Constants
 import com.pilove.vodovodinfo.other.Constants.DEBUG_TAG
+import com.pilove.vodovodinfo.other.Constants.KEY_FROM_SETTING
 import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_LAT
 import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_LNG
 import com.pilove.vodovodinfo.other.Constants.KEY_DEFAULT_LOCATION_STREET_NAME
 import com.pilove.vodovodinfo.other.Constants.KEY_IS_FIRST_TIME
 import com.pilove.vodovodinfo.utils.PermissionsUtil
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_location_setup.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
-import java.lang.ArithmeticException
 import java.lang.Exception
-import java.lang.NullPointerException
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -80,25 +80,42 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
             }
         }
 
+        var isFromSettings = sharedPreferences.getBoolean(KEY_FROM_SETTING, false)
+        sharedPreferences.edit()
+            .putBoolean(KEY_FROM_SETTING, false)
+            .apply()
+
         if(requireParentFragment() is SettingsFragment) {
             isHostedByFragment = true
             tvNext.visibility = View.GONE
             tvSkip.visibility = View.GONE
             tvDiclamer.text = ""
-//            pbMapNoticesSetup.visibility = View.VISIBLE
+            pbMapNoticesSetup.visibility = View.VISIBLE
         }
+        mapViewSetup.onCreate(savedInstanceState)
 
-        if(!isFirstAppTime) {
-            val navigationOpt = NavOptions.Builder()
-                .setPopUpTo(R.id.setupFragment, true)
-                .build()
+        if(!isFirstAppTime && !isFromSettings) {
+//            if(!isFromSettings) {
 
-            findNavController().navigate(
-                R.id.action_setupFragment_to_noticesFragment,
-                savedInstanceState,
-                navigationOpt
-            )
+                val navigationOpt = NavOptions.Builder()
+                    .setPopUpTo(R.id.setupFragment, true)
+                    .build()
+
+                findNavController().navigate(
+                    R.id.action_setupFragment_to_noticesFragment,
+                    savedInstanceState,
+                    navigationOpt
+                )
+//            } else {
+//                Log.d(DEBUG_TAG, "ISFROMSETt")
+//                mapViewSetup.onCreate(savedInstanceState)
+//                mapViewSetup?.getMapAsync { googleMap ->
+//                    map = googleMap
+//                    getDeviceLocation()
+//                }
+//            }
         } else {
+
             mapViewSetup.onCreate(savedInstanceState)
 
             fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
@@ -109,6 +126,8 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
             } else {
                 requestPermissions()
             }
+
+
         }
 
         tvNext.setOnClickListener {
@@ -294,7 +313,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
     @SuppressLint("Missing permissions")
     private fun getDeviceLocation() {
 
-//        pbMapNoticesSetup.visibility = View.VISIBLE
+        pbMapNoticesSetup.visibility = View.VISIBLE
         try {
             if (isPermissionGranted) {
                 val locationResult = fusedLocationProviderClient.lastLocation
@@ -355,9 +374,14 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
 
     private fun geoLocate(tryAgain: Boolean = false) = GlobalScope.launch(IO) {
 
+        var isErrorDialogShown = false
+
         val handler = CoroutineExceptionHandler { _, exception ->
             Log.d(DEBUG_TAG, "CoroutineExceptionHandler got $exception")
-            showErrorDialog()
+            if(!isErrorDialogShown) {
+                showErrorDialog()
+                isErrorDialogShown = true
+            }
         }
 
         val job = GlobalScope.launch(handler) {
@@ -396,8 +420,6 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
                         tvAddress.text = address.featureName
                         tvNext.visibility = View.VISIBLE
                         tvTryAgain.visibility = View.VISIBLE
-//                    Toast.makeText(requireContext(),
-//                        getText(R.string.TOAST_TRY_AGAIN_TEXT), Toast.LENGTH_LONG).show()
                         pbMapNoticesSetup.visibility = View.GONE
                     }
                 }
@@ -440,7 +462,7 @@ class SetupFragment : Fragment(R.layout.fragment_location_setup),
             }
 
             setNegativeButton(getText(R.string.CANCEL)) { dialog, _ ->
-//                pbMapNoticesSetup.visibility = View.GONE
+                pbMapNoticesSetup.visibility = View.GONE
                 dialog.dismiss()
             }
 

@@ -30,4 +30,11 @@
 
     <string name="NOTIFICATION_TITLE">Obavještenje</string>
 
+    <string name="NO_LOCATION_IS_SET_UP">Molimo prvo postavite svoju lokaciju!</string>
+
+    <string name="POSTED">Objavljeno %1$s</string>
+
+    <!-- %1$s string
+         %1$d integer-->
+
 </resources>

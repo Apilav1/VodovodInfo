@@ -57,7 +57,7 @@
                 android:id="@+id/btnOptionOneSettingExpand"
                 android:layout_width="35dp"
                 android:layout_height="35dp"
-                android:background="@drawable/ic_baseline_arrow_drop_down_24"
+                android:background="@drawable/ic_baseline_chevron_right_24"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -225,20 +225,20 @@
             app:layout_constraintBottom_toBottomOf="@id/tvNotfOption3">
 
             <RadioButton
-                android:id="@+id/firstRB"
+                android:id="@+id/streetNotificationsRB"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"/>
 
             <RadioButton
-                android:id="@+id/secondRB"
+                android:id="@+id/allNotificationsRB"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="8dp"/>
 
             <RadioButton
-                android:id="@+id/thirdRB"
+                android:id="@+id/noNotificationsRB"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp" />

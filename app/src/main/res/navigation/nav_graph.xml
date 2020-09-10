@@ -22,5 +22,8 @@
         <action
             android:id="@+id/action_settingsFragment_to_noticesFragment"
             app:destination="@id/noticesFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_setupFragment"
+            app:destination="@id/setupFragment" />
     </fragment>
 </navigation>

@@ -2,6 +2,7 @@ package com.pilove.vodovodinfo.ui
 
 import android.graphics.Color
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
@@ -27,6 +28,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         bottomNavigationView.setupWithNavController(navHostFragment.findNavController())
+
+        navHostFragment.findNavController()
+            .addOnDestinationChangedListener { _, destination, _ ->
+                when(destination.id){
+                    R.id.settingsFragment, R.id.noticesFragment ->
+                        bottomNavigationView.visibility = View.VISIBLE
+                    else -> bottomNavigationView.visibility = View.GONE
+                }
+            }
 
         ConnectionLiveData(this).observe(this,  { isConnected ->
             if(!isConnected) {

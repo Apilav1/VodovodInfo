@@ -14,6 +14,7 @@ object Constants {
 
     const val DEFAULT_VALUE_FOR_NOTICE_TITLE = "Default"
 
+    /**shared preference keys**/
     //for when the app is first time open to show setup fragment
     const val KEY_IS_FIRST_TIME = "KEY_IS_FIRST_TIME"
     const val KEY_DEFAULT_LOCATION_STREET_NAME = "KEY_DEFAULT_LOCATION_STREET_NAME"
@@ -28,4 +29,6 @@ object Constants {
     const val KEY_NOTIFICATIONS_TEXT_SIZE = "KEY_NOTIFICATIONS_TEXT_SIZE"
 
     const val KEY_LATEST_NOTICE_ID = "KEY_LATEST_NOTICE_ID"
+
+    const val KEY_FROM_SETTING = "KEY_FROM_SETTING"
 }

@@ -1,5 +1,7 @@
 # VodovodInfoApp
-This is an app that collects water outage notices from Sarajevo's government water supply company and notifies users accordingly.
+This is an app that collects water outage notices from Sarajevo's government water supply company, locates areas on the map and notifies users accordingly.
+
+![Demo](demo/demo.png)
 
 ## Implementation
 

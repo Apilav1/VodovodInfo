@@ -99,8 +99,6 @@ class NoticesFragment : Fragment(R.layout.fragment_notices) {
                 if(maxIdOldNotices?.id != null && maxIdNewNotice?.id != null &&
                     maxIdOldNotices.id >= maxIdNewNotice.id && !isThisResumed) return@Observer
 
-                isThisResumed = false
-                Log.d(DEBUG_TAG, "DOING ADAPTER")
                 if(isThisResumed)
                     setupRecycleView()
 
